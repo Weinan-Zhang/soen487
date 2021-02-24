@@ -1,12 +1,28 @@
 package com.soen487.rest.project.repository.implementation.controller;
 
-import com.soen487.rest.project.repository.implementation.dao.AlbumRepository;
-import com.soen487.rest.project.repository.implementation.dao.ArtistRepository;
+import com.soen487.rest.project.repository.core.configuration.LogType;
+import com.soen487.rest.project.repository.core.entity.Author;
+import com.soen487.rest.project.repository.core.entity.PriceHistory;
+import com.soen487.rest.project.repository.implementation.dao.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
-import java.io.UnsupportedEncodingException;
+import javax.validation.Valid;
+import javax.validation.constraints.Pattern;
+import javax.ws.rs.FormParam;
+import java.io.*;
+import java.sql.Timestamp;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 @RestController
 public class RepositoryImplementataionController {
@@ -14,6 +30,18 @@ public class RepositoryImplementataionController {
     AlbumRepository albumRepository;
     @Autowired
     ArtistRepository artistRepository;
+    @Autowired
+    BookRepository bookRepository;
+    @Autowired
+    AuthorRepository authorRepository;
+    @Autowired
+    SellerRepository sellerRepository;
+    @Autowired
+    PriceRepository priceRepository;
+    @Autowired
+    PriceHistoryRepository priceHistoryRepository;
+    @Autowired
+    BookChangeLogRepository bookChangeLogRepository;
 
     @GetMapping("/artist/list")
     public List<com.soen487.rest.project.repository.core.entity.projection.ArtistDto> retrieveNamesOfAllArtists() {
@@ -143,5 +171,306 @@ public class RepositoryImplementataionController {
         id = album.getId();
         this.albumRepository.deleteById(id);
         return id;
+    }
+
+    @Transactional
+    @PostMapping("book/add")
+    public ResponseEntity<Long> addBook(@RequestBody com.soen487.rest.project.repository.core.entity.Book book){
+        if(book.getIsbn13().equals("")){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(-1l);
+        }
+        if((book.getSeller().getName().equals(""))){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(-1l);
+        }
+
+        // 插入/更新图书表、作者表及图书-作者中间表
+        com.soen487.rest.project.repository.core.entity.Book bookPersisted;
+
+        if(!this.bookRepository.existsByIsbn13(book.getIsbn13())){
+            if(book.getAuthors().size()>0){
+                ListIterator it = book.getAuthors().listIterator();
+                while(it.hasNext()){
+                    com.soen487.rest.project.repository.core.entity.Author author = (Author) it.next();
+                    Author authorPersisted = this.authorRepository.
+                            findByFirstnameAndLastnameAndMiddlename(
+                                    author.getFirstname(),
+                                    author.getLastname(),
+                                    author.getMiddlename());
+                    if(authorPersisted==null){
+                        authorPersisted = this.authorRepository.saveAndFlush(author);
+                    }
+                    it.set(authorPersisted);
+                }
+            }
+            bookPersisted = this.bookRepository.saveAndFlush(book);
+        }
+        else {
+            // 如果图书已经存在，更新价格和书商信息
+            bookPersisted = this.bookRepository.findByIsbn13(book.getIsbn13());
+        }
+        System.out.println("is bookPersisted null? " + bookPersisted==null);
+        // 更新书商表
+        com.soen487.rest.project.repository.core.entity.Seller sellerPersisted =
+                this.sellerRepository.findByName(book.getSeller().getName());
+        if(sellerPersisted==null){
+            sellerPersisted = this.sellerRepository.saveAndFlush(book.getSeller());
+        }
+
+
+        // 更新价格表
+        com.soen487.rest.project.repository.core.entity.Price pricePersisted =
+                this.priceRepository.findByBookAndSeller(bookPersisted, sellerPersisted);
+
+        if(pricePersisted==null){
+            // 如果当前图书的当前价格（非原始价格）的book和seller变量未空，添加当前图书与当前书商，以免价格记录中bid和sid为空。
+            if(book.getCurrentPrice().getBook()==null){
+                book.getCurrentPrice().setBook(bookPersisted);
+            }
+            if(book.getCurrentPrice().getSeller()==null){
+                book.getCurrentPrice().setSeller(sellerPersisted);
+            }
+            pricePersisted = this.priceRepository.save(book.getCurrentPrice());
+        }
+        else {
+            //如果当前价格与历史价格不同，更新价格历史表
+            if(pricePersisted.getPrice()!=book.getCurrentPrice().getPrice()){
+                PriceHistory priceHistory = new PriceHistory(
+                        new Timestamp(System.currentTimeMillis()),
+                        pricePersisted.getPrice());
+                priceHistory.setPrice(pricePersisted);
+                this.priceHistoryRepository.save(priceHistory);
+
+                pricePersisted.setPrice(book.getCurrentPrice().getPrice());
+            }
+            pricePersisted.setAfflicateUrl(book.getCurrentPrice().getAfflicateUrl());
+            pricePersisted.setPurchaseUrl(book.getCurrentPrice().getPurchaseUrl());
+        }
+        this.priceRepository.save(pricePersisted);
+
+        return ResponseEntity.
+                status(HttpStatus.CREATED).
+                body(bookPersisted.getBid());
+    }
+
+    /*
+    *    上传图书封面图片
+    *
+    *
+    */
+    @PostMapping("/img/uoload")
+    public String uploadImg(@RequestParam("file") CommonsMultipartFile file) throws FileNotFoundException {
+        //获取项目classes/static的地址
+        String staticPath = ClassUtils.getDefaultClassLoader().getResource("static").getPath();
+        //定义上传的文件名
+        String coverName = "cover_" + file.getOriginalFilename();
+        //定义封面本地存储的目录和文件名
+        String coverFullName = "covers" + File.separator + coverName;
+        //定义封面本地存储的完整路径（包括文件名）
+        String coverFullPath = staticPath + File.separator + coverFullName;
+        // 访问路径=静态资源路径+文件目录路径
+        String visitPath = "static" + File.separator + coverFullName;
+
+        File saveFile = new File(coverFullPath);
+        if (!saveFile.exists()){
+            saveFile.mkdirs();
+        }
+        try {
+            file.transferTo(saveFile);  //将临时存储的文件移动到真实存储路径下
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return visitPath;
+    }
+
+    @Transactional
+    @PostMapping("book/log/add")
+    public ResponseEntity<Long> bookLogAdd(@Valid @Pattern(regexp = "\\d+") @RequestParam(name="bid") long bid){
+        com.soen487.rest.project.repository.core.entity.Book book = this.bookRepository.findByBid(bid);
+        if(book==null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(-1l);
+        }
+        com.soen487.rest.project.repository.core.entity.BookChangeLog bookChangeLog =
+                new com.soen487.rest.project.repository.core.entity.BookChangeLog(
+                        new Timestamp(System.currentTimeMillis()),
+                        LogType.CREATE);
+        bookChangeLog.setBook(book);
+        long lid = this.bookChangeLogRepository.save(bookChangeLog).getLid();
+        return ResponseEntity.status(HttpStatus.CREATED).body(lid);
+    }
+
+    @Transactional
+    @DeleteMapping("book/delete")
+    public ResponseEntity<Long> deleteBook(@Valid @Pattern(regexp = "\\d+") @RequestParam(name="bid") long bid){
+        if(!this.bookRepository.existsByBid(bid)){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(-1l);
+        }
+        //根据要删除的图书id获取所有价格记录
+        List<com.soen487.rest.project.repository.core.entity.Price> pricesToDelete =
+                this.priceRepository.findAllByBook(this.bookRepository.findByBid(bid));
+        //遍历返回的价格记录
+        pricesToDelete.stream().forEach(price -> {
+            //逐一删除价格历史记录
+            this.priceHistoryRepository.deleteByPrice(price);
+            //逐一删除价格记录
+            this.priceRepository.deleteById(price.getPid());
+        });
+        //删除图书记录
+        this.bookRepository.deleteByBid(bid);
+        return ResponseEntity.status(HttpStatus.OK).body(bid);
+    }
+
+    @Transactional
+    @PostMapping("book/log/delete")
+    public ResponseEntity<Long> bookLogDelete(@Valid @Pattern(regexp = "\\d+") @RequestParam(name="bid") long bid){
+        com.soen487.rest.project.repository.core.entity.Book book = this.bookRepository.findByBid(bid);
+        // 如果返回结果非空，说明该图书记录还未被删除，不能更新log表
+        if(book!=null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(-1l);
+        }
+        com.soen487.rest.project.repository.core.entity.BookChangeLog bookChangeLog =
+                new com.soen487.rest.project.repository.core.entity.BookChangeLog(
+                        new Timestamp(System.currentTimeMillis()),
+                        LogType.DELETE);
+        book = new com.soen487.rest.project.repository.core.entity.Book();
+        book.setBid(bid);
+        bookChangeLog.setBook(book);
+        this.bookChangeLogRepository.save(bookChangeLog);
+        return ResponseEntity.status(HttpStatus.CREATED).body(book.getBid());
+    }
+
+    @Transactional
+    @PutMapping("book/update")
+    public ResponseEntity<Long> updateBook(@RequestBody com.soen487.rest.project.repository.core.entity.Book book, @Valid @Pattern(regexp = "\\d+") @RequestParam("bid") long bid){
+        if(book==null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(-1l);
+        }
+        if(book.getTitle().equals("") || book.getTitle()==null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(-1l);
+        }
+        if(!this.bookRepository.existsByBid(bid)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(-1l);
+        }
+
+        com.soen487.rest.project.repository.core.entity.Book bookPersisted = this.bookRepository.findByBid(bid);
+        if(book.getCoverImg()!=null && !book.getCoverImg().equals(""))
+            bookPersisted.setCoverImg(book.getCoverImg());
+        if(book.getDescription()!=null && !book.getDescription().equals(""))
+            bookPersisted.setDescription(book.getDescription());
+        if(book.getFormat()!=null && !book.getFormat().equals(""))
+            bookPersisted.setFormat(book.getFormat());
+//        if(book.getIsbn10()!=null && !book.getIsbn10().equals("") && !this.bookRepository.existsByIsbn10(book.getIsbn10()))
+//            bookPersisted.setIsbn10(book.getIsbn10());
+        if(book.getIsbn13()!=null && !book.getIsbn13().equals("") && !this.bookRepository.existsByIsbn13(book.getIsbn13()))
+            bookPersisted.setIsbn13(book.getIsbn13());
+        if(book.getLanguage()!=null && !book.getLanguage().equals(""))
+            bookPersisted.setLanguage(book.getLanguage());
+        if(book.getOriginalPrice()>0 && book.getOriginalPrice()!=bookPersisted.getOriginalPrice())
+            bookPersisted.setOriginalPrice(book.getOriginalPrice());
+        if(book.getPublisher()!=null && !book.getPublisher().equals(""))
+            bookPersisted.setPublisher(book.getPublisher());
+        if(book.getTitle()!=null && !book.getTitle().equals(""))
+            bookPersisted.setTitle(book.getTitle());
+
+        // 更新作者
+        if(book.getAuthors()!=null && book.getAuthors().size()>0){
+            ListIterator it = book.getAuthors().listIterator();
+            while(it.hasNext()){
+                com.soen487.rest.project.repository.core.entity.Author author = (Author) it.next();
+                Author authorPersisted = this.authorRepository.
+                        findByFirstnameAndLastnameAndMiddlename(
+                                author.getFirstname(),
+                                author.getLastname(),
+                                author.getMiddlename());
+                if(authorPersisted==null){
+                    authorPersisted = this.authorRepository.saveAndFlush(author);
+                }
+                it.set(authorPersisted);
+            }
+            bookPersisted.setAuthors(book.getAuthors());
+        }
+
+        // 更新价格表
+        if(book.getCurrentPrice()!=null){
+            // 书商对象不能为空，否则无法级联更新价格表，如果书商为空，抛出异常
+            if(book.getSeller()==null){
+                throw new RuntimeException("book seller must not be empty!");
+            }
+            // 更新书商表
+            com.soen487.rest.project.repository.core.entity.Seller sellerPersisted =
+                    this.sellerRepository.findByName(book.getSeller().getName());
+            if(sellerPersisted==null){
+                sellerPersisted = this.sellerRepository.saveAndFlush(book.getSeller());
+            }
+            bookPersisted.setSeller(sellerPersisted);
+
+            com.soen487.rest.project.repository.core.entity.Price pricePersisted =
+                    this.priceRepository.findByBookAndSeller(bookPersisted, bookPersisted.getSeller());
+
+            if(pricePersisted==null){
+                // 如果当前图书的当前价格（非原始价格）的book和seller变量为空，添加当前图书与当前书商，以免价格记录中bid和sid为空。
+                if(book.getCurrentPrice().getBook()==null){
+                    book.getCurrentPrice().setBook(bookPersisted);
+                }
+                if(book.getCurrentPrice().getSeller()==null){
+                    book.getCurrentPrice().setSeller(bookPersisted.getSeller());
+                }
+                pricePersisted = this.priceRepository.saveAndFlush(book.getCurrentPrice());
+                //新插入一条价格记录后，向历史价格表中也插入一条记录
+                PriceHistory priceHistory = new PriceHistory(
+                        new Timestamp(System.currentTimeMillis()),
+                        pricePersisted.getPrice());
+                priceHistory.setPrice(pricePersisted);
+                this.priceHistoryRepository.save(priceHistory);
+            }
+            else {
+                //如果当前价格与历史价格不同，更新价格历史表
+                if(pricePersisted.getPrice()!=book.getCurrentPrice().getPrice()){
+                    PriceHistory priceHistory = new PriceHistory(
+                            new Timestamp(System.currentTimeMillis()),
+                            pricePersisted.getPrice());
+                    priceHistory.setPrice(pricePersisted);
+                    this.priceHistoryRepository.save(priceHistory);
+
+                    pricePersisted.setPrice(book.getCurrentPrice().getPrice());
+                }
+                pricePersisted.setAfflicateUrl(book.getCurrentPrice().getAfflicateUrl());
+                pricePersisted.setPurchaseUrl(book.getCurrentPrice().getPurchaseUrl());
+            }
+            this.priceRepository.save(pricePersisted);
+        }
+
+        this.bookRepository.saveAndFlush(bookPersisted);
+        return ResponseEntity.
+                status(HttpStatus.CREATED).
+                body(bookPersisted.getBid());
+    }
+
+    @Transactional
+    @PostMapping("book/log/update")
+    public ResponseEntity<Long> bookLogUpdate(@Valid @Pattern(regexp = "\\d+") @RequestParam(name="bid") long bid){
+        com.soen487.rest.project.repository.core.entity.Book book = this.bookRepository.findByBid(bid);
+        // 如果返回结果非空，说明该图书记录还未被删除，不能更新log表
+        if(book==null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(-1l);
+        }
+        com.soen487.rest.project.repository.core.entity.BookChangeLog bookChangeLog =
+                new com.soen487.rest.project.repository.core.entity.BookChangeLog(
+                        new Timestamp(System.currentTimeMillis()),
+                        LogType.MODIFY);
+        bookChangeLog.setBook(book);
+        this.bookChangeLogRepository.save(bookChangeLog);
+        return ResponseEntity.status(HttpStatus.CREATED).body(book.getBid());
+    }
+
+    @RequestMapping("book/list")
+    public ResponseEntity<List<com.soen487.rest.project.repository.core.entity.Book>> listBooks(){
+        List<com.soen487.rest.project.repository.core.entity.Book> books = this.bookRepository.findAllBy();
+        return ResponseEntity.status(HttpStatus.OK).body(books);
+    }
+
+    @RequestMapping("book/{bid}")
+    public ResponseEntity<com.soen487.rest.project.repository.core.entity.Book> detailBook(@PathVariable("bid") long bid){
+        com.soen487.rest.project.repository.core.entity.Book book = this.bookRepository.findByBid(bid);
+        return ResponseEntity.status(HttpStatus.OK).body(book);
     }
 }

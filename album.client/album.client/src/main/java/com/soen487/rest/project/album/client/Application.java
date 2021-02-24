@@ -34,7 +34,7 @@ public class Application {
 			System.out.println("input [7] to get details of an artists:");
 			System.out.println("input [8] to add a new artists:");
 			System.out.println("input [9] to modify an artists:");
-			System.out.println("input [10] to modify an artists:");
+			System.out.println("input [10] to delete an artists:");
 			System.out.println("input [0] to quit.");
 			selectedOption = scanner.nextInt();
 			scanner.nextLine();
@@ -59,7 +59,7 @@ public class Application {
 				formData.put("title", title);
 				System.out.println("please enter the description of the album you want to add:");
 				String description = scanner.nextLine();
-				formData.put("description", description);
+				formData.put("description3", description);
 				System.out.println("please enter the released_year of the album you want to add:");
 				String released_year = scanner.nextLine();
 				formData.put("released_year", released_year);

@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
 //@EnableJpaRepositories	当repository的实现不在当前项目包及其子包时，需要使用这个注释将repository实现类注入到当前项目中
-@EntityScan(basePackages = {"com.soen487.rest.project.repository.core.entity"})
+@EntityScan(basePackages = {"com.soen487.rest.project.repository.core"})
 @EnableDiscoveryClient
 public class Application {
 
