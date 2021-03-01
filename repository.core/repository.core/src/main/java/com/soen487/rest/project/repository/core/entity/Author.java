@@ -68,4 +68,8 @@ public class Author implements Serializable {
     public void setMiddlename(String middlename) {
         this.middlename = middlename;
     }
+
+    public String toString(){
+        return this.firstname;
+    }
 }

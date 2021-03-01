@@ -1,23 +1,31 @@
 package com.soen487.rest.project.repository.implementation.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.soen487.rest.project.repository.core.configuration.LogType;
 import com.soen487.rest.project.repository.core.entity.Author;
 import com.soen487.rest.project.repository.core.entity.PriceHistory;
 import com.soen487.rest.project.repository.implementation.dao.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import sun.misc.BASE64Decoder;
 
+import javax.imageio.ImageIO;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
 import javax.ws.rs.FormParam;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.sql.Timestamp;
 import java.util.Iterator;
@@ -175,7 +183,9 @@ public class RepositoryImplementataionController {
 
     @Transactional
     @PostMapping("book/add")
-    public ResponseEntity<Long> addBook(@RequestBody com.soen487.rest.project.repository.core.entity.Book book){
+    public ResponseEntity<Long> addBook(@RequestBody String bookStr) throws JsonProcessingException {
+        Gson gsonMapper = new Gson();
+        com.soen487.rest.project.repository.core.entity.Book book = gsonMapper.fromJson(bookStr, com.soen487.rest.project.repository.core.entity.Book.class);
         if(book.getIsbn13().equals("")){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(-1l);
         }
@@ -257,12 +267,18 @@ public class RepositoryImplementataionController {
     *
     *
     */
-    @PostMapping("/img/uoload")
-    public String uploadImg(@RequestParam("file") CommonsMultipartFile file) throws FileNotFoundException {
+    @PostMapping(value = "/img/uoload")
+    public String uploadImg(@RequestBody String base64String, @RequestParam String originalFileName) throws IOException {
+        // 将图片字符串流解码
+        BASE64Decoder decoder = new sun.misc.BASE64Decoder();
+        byte[] bytes1 = decoder.decodeBuffer(base64String);
+        ByteArrayInputStream bais = new ByteArrayInputStream(bytes1);
+        BufferedImage bi1 = ImageIO.read(bais);
+
         //获取项目classes/static的地址
         String staticPath = ClassUtils.getDefaultClassLoader().getResource("static").getPath();
         //定义上传的文件名
-        String coverName = "cover_" + file.getOriginalFilename();
+        String coverName = "cover_" + originalFileName;
         //定义封面本地存储的目录和文件名
         String coverFullName = "covers" + File.separator + coverName;
         //定义封面本地存储的完整路径（包括文件名）
@@ -275,7 +291,8 @@ public class RepositoryImplementataionController {
             saveFile.mkdirs();
         }
         try {
-            file.transferTo(saveFile);  //将临时存储的文件移动到真实存储路径下
+            ImageIO.write(bi1, "jpg", saveFile);    //将临时存储的文件移动到真实存储路径下
+//            file.transferTo(saveFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -340,8 +357,10 @@ public class RepositoryImplementataionController {
 
     @Transactional
     @PutMapping("book/update")
-    public ResponseEntity<Long> updateBook(@RequestBody com.soen487.rest.project.repository.core.entity.Book book, @Valid @Pattern(regexp = "\\d+") @RequestParam("bid") long bid){
-        if(book==null) {
+    public ResponseEntity<Long> updateBook(@RequestBody String bookStr, @Valid @Pattern(regexp = "\\d+") @RequestParam("bid") long bid){
+        Gson gsonMapper = new Gson();
+        com.soen487.rest.project.repository.core.entity.Book book = gsonMapper.fromJson(bookStr, com.soen487.rest.project.repository.core.entity.Book.class);
+        if(book==null || bookStr=="") {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(-1l);
         }
         if(book.getTitle().equals("") || book.getTitle()==null){
@@ -462,13 +481,13 @@ public class RepositoryImplementataionController {
         return ResponseEntity.status(HttpStatus.CREATED).body(book.getBid());
     }
 
-    @RequestMapping("book/list")
+    @GetMapping("book/list")
     public ResponseEntity<List<com.soen487.rest.project.repository.core.entity.Book>> listBooks(){
         List<com.soen487.rest.project.repository.core.entity.Book> books = this.bookRepository.findAllBy();
         return ResponseEntity.status(HttpStatus.OK).body(books);
     }
 
-    @RequestMapping("book/{bid}")
+    @GetMapping("book/{bid}")
     public ResponseEntity<com.soen487.rest.project.repository.core.entity.Book> detailBook(@PathVariable("bid") long bid){
         com.soen487.rest.project.repository.core.entity.Book book = this.bookRepository.findByBid(bid);
         return ResponseEntity.status(HttpStatus.OK).body(book);
