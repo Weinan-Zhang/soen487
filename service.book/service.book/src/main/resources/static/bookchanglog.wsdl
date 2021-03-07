@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch="bookauditing.service.project.rest.soen487.com" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="bookauditing.service.project.rest.soen487.com" targetNamespace="bookauditing.service.project.rest.soen487.com">
+  <wsdl:types>
+    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="bookauditing.service.project.rest.soen487.com">
+
+    <xs:element name="bookChangeLogRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="bid" type="xs:long"/>
+                <xs:element name="logType" type="tns:LogType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="bookChangeLogResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="1" minOccurs="0" name="lid" type="xs:long"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="getLogRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="fromDateTime" nillable="true" type="xs:dateTime"/>
+                <xs:element name="toDateTime" nillable="true" type="xs:dateTime"/>
+                <xs:element name="logType" nillable="true" type="tns:LogType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="getLogResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs="unbounded" minOccurs="0" name="logDtos" type="tns:BookChangeLogDto"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:simpleType name="LogType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="CREATE"/>
+            <xs:enumeration value="DELETE"/>
+            <xs:enumeration value="MODIFY"/>
+            <xs:enumeration value="ALL"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="BookChangeLogDto">
+        <xs:sequence>
+            <xs:element name="lid" type="xs:long"/>
+            <xs:element name="logTime" type="xs:dateTime"/>
+            <xs:element name="logType" type="tns:LogType"/>
+            <xs:element name="isbn" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="serviceStatus">
+        <xs:sequence>
+            <xs:element name="statusCode" type="xs:string"/>
+            <xs:element name="message" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
+  </wsdl:types>
+  <wsdl:message name="getLogRequest">
+    <wsdl:part element="tns:getLogRequest" name="getLogRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="bookChangeLogResponse">
+    <wsdl:part element="tns:bookChangeLogResponse" name="bookChangeLogResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="getLogResponse">
+    <wsdl:part element="tns:getLogResponse" name="getLogResponse">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="bookChangeLogRequest">
+    <wsdl:part element="tns:bookChangeLogRequest" name="bookChangeLogRequest">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="BookchanglogPort">
+    <wsdl:operation name="getLog">
+      <wsdl:input message="tns:getLogRequest" name="getLogRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:getLogResponse" name="getLogResponse">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="bookChangeLog">
+      <wsdl:input message="tns:bookChangeLogRequest" name="bookChangeLogRequest">
+    </wsdl:input>
+      <wsdl:output message="tns:bookChangeLogResponse" name="bookChangeLogResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="BookchanglogPortSoap11" type="tns:BookchanglogPort">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="getLog">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="getLogRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="getLogResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="bookChangeLog">
+      <soap:operation soapAction=""/>
+      <wsdl:input name="bookChangeLogRequest">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="bookChangeLogResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="BookchanglogPortService">
+    <wsdl:port binding="tns:BookchanglogPortSoap11" name="BookchanglogPortSoap11">
+      <soap:address location="http://localhost:8802/ws"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

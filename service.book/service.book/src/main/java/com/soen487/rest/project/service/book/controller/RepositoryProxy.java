@@ -16,15 +16,15 @@ import java.util.List;
 @RibbonClient(name="repository.implementation")
 public interface RepositoryProxy {
     @PostMapping("book/add")
-    ResponseEntity<Long> addBook(@RequestBody String book);
+    com.soen487.rest.project.repository.core.configuration.ServiceResponse<Long> addBook(@RequestBody String book);
     @PostMapping(value = "/img/uoload")
-    String uploadImg(@RequestBody String base64String, @RequestParam String originalFileName) throws IOException;
-    @RequestMapping("book/list")
-    ResponseEntity<List<com.soen487.rest.project.repository.core.entity.Book>> listBooks();
-    @RequestMapping("book/{bid}")
-    ResponseEntity<com.soen487.rest.project.repository.core.entity.Book> detailBook(@PathVariable("bid") long bid);
+    com.soen487.rest.project.repository.core.configuration.ServiceResponse<String> uploadImg(@RequestBody String encodedImgJson) throws IOException;
+    @GetMapping("book/list")
+    com.soen487.rest.project.repository.core.configuration.ServiceResponse<List<com.soen487.rest.project.repository.core.entity.Book>> listBooks();
+    @GetMapping("book/{bid}")
+    com.soen487.rest.project.repository.core.configuration.ServiceResponse<com.soen487.rest.project.repository.core.entity.Book> detailBook(@PathVariable("bid") long bid);
     @PutMapping("book/update")
-    ResponseEntity<Long> updateBook(@RequestBody String bookStr, @Valid @Pattern(regexp = "\\d+") @RequestParam("bid") long bid);
+    com.soen487.rest.project.repository.core.configuration.ServiceResponse<Long> updateBook(@RequestBody String bookStr, @Valid @Pattern(regexp = "\\d+") @RequestParam("bid") long bid);
     @DeleteMapping("book/delete")
-    ResponseEntity<Long> deleteBook(@Valid @Pattern(regexp = "\\d+") @RequestParam(name="bid") long bid);
+    com.soen487.rest.project.repository.core.configuration.ServiceResponse<Long> deleteBook(@Valid @Pattern(regexp = "\\d+") @RequestParam(name="bid") long bid);
 }

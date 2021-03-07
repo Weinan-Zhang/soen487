@@ -1,6 +1,6 @@
 package com.soen487.rest.project.repository.core.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.soen487.rest.project.repository.core.configuration.LogType;
 
 import javax.persistence.*;
@@ -18,8 +18,12 @@ public class BookChangeLog implements Serializable {
     private Timestamp logTime;
     @Column(name="bcl_log_type", nullable = false)
     private LogType logType;
-    @ManyToOne
+    @Column(name="isbn")
+    private String isbn;
+
+    @ManyToOne(fetch=FetchType.LAZY)
     @JoinColumn(name="bcl_b_bid", foreignKey=@ForeignKey(name="none", value=ConstraintMode.NO_CONSTRAINT))
+    @JsonIgnore
     private com.soen487.rest.project.repository.core.entity.Book book;
 
     public BookChangeLog(){}
@@ -27,6 +31,12 @@ public class BookChangeLog implements Serializable {
     public BookChangeLog(Timestamp logTime, LogType logType) {
         this.logTime = logTime;
         this.logType = logType;
+    }
+
+    public BookChangeLog(Timestamp logTime, LogType logType, String isbn) {
+        this.logTime = logTime;
+        this.logType = logType;
+        this.isbn = isbn;
     }
 
     public long getLid() {
@@ -60,4 +70,8 @@ public class BookChangeLog implements Serializable {
     public void setBook(com.soen487.rest.project.repository.core.entity.Book book) {
         this.book = book;
     }
+
+    public String getIsbn() { return isbn; }
+
+    public void setIsbn(String isbn) { this.isbn = isbn; }
 }

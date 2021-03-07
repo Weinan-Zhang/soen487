@@ -1,8 +1,17 @@
 package com.soen487.rest.project.service.book.controller;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
+import com.soen487.rest.project.repository.core.configuration.ReturnCode;
 import com.soen487.rest.project.repository.core.entity.Book;
+import com.soen487.rest.project.service.book.model.ws.BookChangeLogDto;
+import com.soen487.rest.project.service.book.model.ws.BookChangeLogResponse;
+import com.soen487.rest.project.service.book.model.ws.GetLogResponse;
+import com.soen487.rest.project.service.book.model.ws.LogType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -13,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import sun.misc.BASE64Encoder;
 
+import javax.xml.datatype.DatatypeConfigurationException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,10 +31,11 @@ import java.util.stream.Collectors;
 
 @Controller
 public class EndpointBook {
-    @Autowired
     private static int num_instace_cnt;
     @Autowired
     private RepositoryProxy repositoryProxy;
+    @Autowired
+    private BookChangLogClient bookChangLogClient;
 
     @RequestMapping(value="/", method= RequestMethod.GET)
     public String viewWelcome(){
@@ -32,9 +43,7 @@ public class EndpointBook {
     }
 
     @RequestMapping(value="/addbook", method=RequestMethod.GET)
-    public String viewAddBook(){
-        return "addbook";
-    }
+    public String viewAddBook(){ return "addbook"; }
 
     @RequestMapping(value="/book/add", method=RequestMethod.POST)
     public ModelAndView addBook(@RequestParam("title") String title,
@@ -67,45 +76,102 @@ public class EndpointBook {
         book.setIsbn13(isbn);
         book.setFormat(format);
         book.setDescription(description);
-        if(file!=null){
+        if(file!=null && !file.isEmpty()){
             book.setCoverImg(file.getOriginalFilename());
 
             BASE64Encoder encoder = new sun.misc.BASE64Encoder();
             byte[] bytes = file.getBytes();
             String base64String = encoder.encode(bytes).trim();
             String originalFilename = file.getOriginalFilename();
+            Gson gsonMapper = new Gson();
+            com.soen487.rest.project.repository.core.configuration.ServiceResponse response =
+                    this.repositoryProxy.uploadImg(gsonMapper.toJson(new com.soen487.rest.project.repository.core.DTO.EncodedImg(base64String, originalFilename)));
 
-            this.repositoryProxy.uploadImg(base64String, originalFilename);
+            System.out.println("response code: " + response.getCode());
+            if(response.getCode()<200 || response.getCode()>299){
+                String info = "Unknown error occured when processing image uploaded!";
+                ModelAndView model = new ModelAndView("error");
+                ModelMap modelMap = new ModelMap();
+                modelMap.addAttribute("info", info);
+                model.addAllObjects(modelMap);
+                return  model;
+            }
         }
 
         Gson gsonMaper = new Gson();
         String bookStr = gsonMaper.toJson(book);
-        ResponseEntity response = this.repositoryProxy.addBook(bookStr);
-        long bid = (long) response.getBody();
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse response = this.repositoryProxy.addBook(bookStr);
+        if(response.getCode()<200 || response.getCode()>299){
+            String info = "Unknown error occured when processing book persistence!";
+            ModelAndView model = new ModelAndView("error");
+            ModelMap modelMap = new ModelMap();
+            modelMap.addAttribute("info", info);
+            model.addAllObjects(modelMap);
+            return  model;
+        }
+
+        long bid = (long) response.getPayload();
+
+        BookChangeLogResponse soapResponse = this.bookChangLogClient.bookChangeLog(LogType.CREATE, bid);
+        if(soapResponse.getLid()==-1){
+            String info = "error occured during book log insertion!";
+            ModelAndView model = new ModelAndView("error");
+            ModelMap modelMap = new ModelMap();
+            modelMap.addAttribute("info", info);
+            model.addAllObjects(modelMap);
+            return  model;
+        }
+
         return new ModelAndView("redirect:" + "/bookdetail/" + String.valueOf(bid));
     }
 
     @RequestMapping(value="listbook", method=RequestMethod.GET)
-    public String listBook(ModelMap modelMap){
-        ResponseEntity books = this.repositoryProxy.listBooks();
-        modelMap.addAttribute("books", books.getBody());
+    public String listBook(Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<List<Book>> serviceResponse =
+                this.repositoryProxy.listBooks();
+        if(serviceResponse.getCode()<200 || serviceResponse.getCode()>299){
+            String info = serviceResponse.getMessage();
+            model.addAttribute("info", info);
+            return "error";
+        }
+        List<Book> booksMap = serviceResponse.getPayload();
+        ObjectMapper mapper = new ObjectMapper();
+        List<Book> books = mapper.convertValue(booksMap, new TypeReference<List<Book>>() { });
+        model.addAttribute("books", books);
         return "booklist";
     }
 
     @RequestMapping(value="bookdetail/{bid}", method=RequestMethod.GET)
-    public String detailBook(@PathVariable("bid") long bid, ModelMap modelMap){
-        ResponseEntity book = this.repositoryProxy.detailBook(bid);
-        modelMap.addAttribute("book", book.getBody());
+    public String detailBook(@PathVariable("bid") long bid, Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<Book> serviceResponse = this.repositoryProxy.detailBook(bid);
+        if(serviceResponse.getCode()<200 || serviceResponse.getCode()>299){
+            String info = serviceResponse.getMessage();
+            model.addAttribute("info", info);
+            return "error";
+        }
+        Book bookMap = serviceResponse.getPayload();
+        ObjectMapper mapper = new ObjectMapper();
+        Book book = mapper.convertValue(bookMap, new TypeReference<Book>() { });
+        model.addAttribute("book", book);
         return "bookdetail";
     }
 
     @RequestMapping(value="/modifybook/{bid}", method=RequestMethod.GET)
-    public String viewModifyBook(@PathVariable("bid") long bid, ModelMap modelMap){
-        ResponseEntity book = this.repositoryProxy.detailBook(bid);
-        modelMap.addAttribute("book", book.getBody());
-        com.soen487.rest.project.repository.core.entity.Book bookObj = (Book) book.getBody();
-        String authors = bookObj.getAuthors().stream().map(author->author.toString()).collect(Collectors.joining(","));
-        modelMap.addAttribute("authors", authors);
+    public String viewModifyBook(@PathVariable("bid") long bid, Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<Book> serviceResponse = this.repositoryProxy.detailBook(bid);
+        if(serviceResponse.getCode()<200 || serviceResponse.getCode()>299){
+            String info = serviceResponse.getMessage();
+            model.addAttribute("info", info);
+            return "error";
+        }
+
+        Book bookMap = serviceResponse.getPayload();
+        ObjectMapper mapper = new ObjectMapper();
+        Book book = mapper.convertValue(bookMap, new TypeReference<Book>() { });
+        String authors = book.getAuthors().stream().map(author->author.toString()).collect(Collectors.joining(","));
+
+        model.addAttribute("book", book);
+        model.addAttribute("authors", authors);
         return "modifybook";
     }
 
@@ -119,8 +185,17 @@ public class EndpointBook {
                           @RequestParam("description") String description,
                           @RequestParam("bid") long bid,
                           @RequestParam("up_img") MultipartFile file) throws IOException {
-        ResponseEntity persistedBookResponse = this.repositoryProxy.detailBook(bid);
-        Book persistedBook = (com.soen487.rest.project.repository.core.entity.Book) persistedBookResponse.getBody();
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<Book> persistedBookResponse =
+                this.repositoryProxy.detailBook(bid);
+        if(persistedBookResponse.getCode()<200 || persistedBookResponse.getCode()>299){
+            String info = persistedBookResponse.getMessage();
+            ModelAndView model = new ModelAndView("error");
+            ModelMap modelMap = new ModelMap();
+            modelMap.addAttribute("info", info);
+            model.addAllObjects(modelMap);
+            return  model;
+        }
+        Book persistedBook = persistedBookResponse.getPayload();
         int test_case_cnt = this.num_instace_cnt++;
         List<com.soen487.rest.project.repository.core.entity.Author> authorList = new ArrayList<>();
         if(authors.contains(",")){
@@ -143,20 +218,67 @@ public class EndpointBook {
             byte[] bytes = file.getBytes();
             String base64String = encoder.encode(bytes).trim();
             String originalFilename = file.getOriginalFilename();
+            Gson gsonMapper = new Gson();
+            com.soen487.rest.project.repository.core.configuration.ServiceResponse<String> imgUpResponse = this.repositoryProxy.uploadImg(gsonMapper.toJson(new com.soen487.rest.project.repository.core.DTO.EncodedImg(base64String, originalFilename)));
 
-            this.repositoryProxy.uploadImg(base64String, originalFilename);
+            if(imgUpResponse.getCode()<200 || imgUpResponse.getCode()>299){
+                String info = persistedBookResponse.getMessage();
+                ModelAndView model = new ModelAndView("error");
+                ModelMap modelMap = new ModelMap();
+                modelMap.addAttribute("info", info);
+                model.addAllObjects(modelMap);
+                return  model;
+            }
         }
 
         Gson gsonMaper = new Gson();
         String persistedBookStr = gsonMaper.toJson(persistedBook);
-        this.repositoryProxy.updateBook(persistedBookStr, bid);
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<Long> response =
+                this.repositoryProxy.updateBook(persistedBookStr, bid);
+
+        if(response.getCode()<200 || response.getCode()>299){
+            String info = response.getMessage();
+            ModelAndView model = new ModelAndView("error");
+            ModelMap modelMap = new ModelMap();
+            modelMap.addAttribute("info", info);
+            model.addAllObjects(modelMap);
+            return  model;
+        }
+
+        BookChangeLogResponse soapResponse = this.bookChangLogClient.bookChangeLog(LogType.MODIFY, bid);
+        if(soapResponse.getLid()==-1){
+            String info = "error occured during book log update!";
+            ModelAndView model = new ModelAndView("error");
+            ModelMap modelMap = new ModelMap();
+            modelMap.addAttribute("info", info);
+            model.addAllObjects(modelMap);
+            return  model;
+        }
+
 
         return new ModelAndView("redirect:" + "/bookdetail/" + String.valueOf(bid));
     }
 
     @RequestMapping(value="deletebook", method=RequestMethod.DELETE)
     public ModelAndView deleteBook(@RequestParam("bid") long bid){
-        this.repositoryProxy.deleteBook(bid);
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<Long> response = this.repositoryProxy.deleteBook(bid);
+        if(response.getCode()<200 || response.getCode()>299){
+            String info = response.getMessage();
+            ModelAndView model = new ModelAndView("error");
+            ModelMap modelMap = new ModelMap();
+            modelMap.addAttribute("info", info);
+            model.addAllObjects(modelMap);
+            return  model;
+        }
+        BookChangeLogResponse soapResponse = this.bookChangLogClient.bookChangeLog(LogType.DELETE, bid);
+        if(soapResponse.getLid()==-1){
+            String info = "error occured during book log deletion!";
+            ModelAndView model = new ModelAndView("error");
+            ModelMap modelMap = new ModelMap();
+            modelMap.addAttribute("info", info);
+            model.addAllObjects(modelMap);
+            return  model;
+        }
         return new ModelAndView("redirect:/listbook");
     }
 
@@ -179,5 +301,36 @@ public class EndpointBook {
         String info = "We are working hard on this functionality, be patient!";
         model.addAttribute("info", info);
         return "error";
+    }
+
+    @RequestMapping(value="/loglist", method=RequestMethod.GET)
+    public String viewLogs(Model model){
+        GetLogResponse response = this.bookChangLogClient.getLog(null,null,null);
+
+        if(response.getLogDtos()==null || response.getLogDtos().size()==0){
+            throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
+        }
+        List<BookChangeLogDto> logDtos = response.getLogDtos();
+        model.addAttribute("logs", logDtos);
+        return "loglist";
+    }
+
+    @RequestMapping(value="/loglist", method=RequestMethod.POST)
+    public String queryLogs(Model model,
+                          @RequestParam(name="stime") String stimeStr,
+                          @RequestParam(name="etime") String etimeStr,
+                          @RequestParam(name="logType") String logTypeStr) throws DatatypeConfigurationException {
+
+        GetLogResponse response = this.bookChangLogClient.getLog(
+                com.soen487.rest.project.repository.core.util.CommonUtils.formatXMLGregorianCalendar(stimeStr),
+                com.soen487.rest.project.repository.core.util.CommonUtils.formatXMLGregorianCalendar(etimeStr),
+                LogType.valueOf(logTypeStr));
+
+        if(response.getLogDtos()==null || response.getLogDtos().size()==0){
+            throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
+        }
+        List<BookChangeLogDto> logDtos = response.getLogDtos();
+        model.addAttribute("logs", logDtos);
+        return "loglist";
     }
 }

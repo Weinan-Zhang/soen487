@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="bookauditing.service.project.rest.soen487.com"
+           targetNamespace="bookauditing.service.project.rest.soen487.com" elementFormDefault="qualified">
+
+    <xs:element name="bookChangeLogRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="bid" type="xs:long"/>
+                <xs:element name="logType" type="tns:LogType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="bookChangeLogResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="lid" type="xs:long" minOccurs="0" maxOccurs="1"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="getLogRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="fromDateTime" type="xs:dateTime" nillable="true"/>
+                <xs:element name="toDateTime" type="xs:dateTime" nillable="true"/>
+                <xs:element name="logType" type="tns:LogType" nillable="true"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="getLogResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="logDtos" type="tns:BookChangeLogDto" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:simpleType name="LogType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="CREATE"/>
+            <xs:enumeration value="DELETE"/>
+            <xs:enumeration value="MODIFY"/>
+            <xs:enumeration value="ALL"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="BookChangeLogDto">
+        <xs:sequence>
+            <xs:element name="lid" type="xs:long"/>
+            <xs:element name="logTime" type="xs:dateTime"/>
+            <xs:element name="logType" type="tns:LogType"/>
+            <xs:element name="isbn" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="serviceStatus">
+        <xs:sequence>
+            <xs:element name="statusCode" type="xs:string"/>
+            <xs:element name="message" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

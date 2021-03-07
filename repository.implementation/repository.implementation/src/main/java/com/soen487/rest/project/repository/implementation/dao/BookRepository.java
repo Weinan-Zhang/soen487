@@ -1,9 +1,11 @@
 package com.soen487.rest.project.repository.implementation.dao;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface BookRepository extends JpaRepository<com.soen487.rest.project.repository.core.entity.Book,Long> {
     boolean existsByIsbn13(String isbn13);
     boolean existsByBid(long bid);
