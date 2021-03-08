@@ -19,8 +19,8 @@
         <%--        <p>想看既看，想听既听得阅读</p>--%>
     </div>
     <div class="search left">
-        <form  action="" method="get">
-            <input type="text" value="" placeholder="find a book by title or author">
+        <form  action="/book/search" method="post">
+            <input type="text" value="" placeholder="find a book by title or author" name="keyword">
             <input type="submit" value="search">
         </form>
     </div>

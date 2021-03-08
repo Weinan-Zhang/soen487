@@ -1,8 +1,8 @@
 <%--
   Created by IntelliJ IDEA.
   User: Bruce
-  Date: 2021-03-05
-  Time: 11:40 a.m.
+  Date: 2021-02-27
+  Time: 12:40 a.m.
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
@@ -11,10 +11,8 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>散文列表页</title>
-    <link href="/resources/static/springbook_1/css/css.css" rel="stylesheet" type="text/css">
-    <link href="/resources/static/springbook_1/css/list.css" rel="stylesheet" type="text/css">
-    <!--<link  href="css/list.css" rel="stylesheet" type="text/css">-->
+    <title>book - list</title>
+    <link  href="/resources/static/springbook_1/css/css.css" rel="stylesheet" type="text/css">
     <script src="/resources/static/springbook_1/js/jquery.js"></script>
     <script src="/resources/static/springbook_1/js/js.js"></script>
     <script src="/resources/static/springbook_1/js/list.js"></script>
@@ -33,63 +31,58 @@
 
 <body>
 <jsp:include page="header_nav.jsp"></jsp:include>
-<div class="log_search">
-    <form action="/queryloglist" method="post">
-        Search logs between&nbsp;<input type="text" name="stime" placeholder="YYYY-MM-DDThh:mm:ss">&nbsp;
-        and&nbsp;<input type="text" name="etime" placeholder="YYYY-MM-DD hh:mm:ss">&nbsp;of&nbsp;
-        <select name="logType">
-            <option value="ALL" selected>ALL</option>
-            <option value="CREATE">CREATE</option>
-            <option value="DELETE">DELETE</option>
-            <option value="MODIFY">MODIFY</option>
-        </select>
-        <input type="submit" name="search"/>
-    </form>
-</div>
-<div class="box_narrow clear">
+
+<div class="box clear">
     <div class="list">
+<%--        <div class="tit">--%>
+<%--            <b>书名</b> <b>浏览次数</b> <b>文件大小</b>--%>
+<%--        </div>--%>
         <ul class="con">
-            <li>
-                <span>id&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                <span>type&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                <span>isbn&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                <span>log time&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            </li>
-            <c:forEach items="${logs}" var="log">
+            <c:forEach items="${author.getBooks()}" var="book">
                 <li>
-                    <span>${log.getLid()}</span>
-                    <span>${log.getLogType()}</span>
-                    <span>${log.getIsbn()}</span>
-                    <span>${log.getLogTime()}</span>
+                    <table cellspacing="10px">
+                        <tr>
+                            <td><span><img src="http://localhost:8000/covers/cover_${book.getCoverImg()}"></span></td>
+                            <td>
+                                <span>
+                                    <p><b><a href="bookdetail/${book.getBid()}" class="single">${book.getTitle()}</a></b></p>
+                                    <p>${book.getFormat()}</p>
+                                    <p>${book.getPublisher()}</p>
+                                    <p>
+                                        <c:forEach items="${book.getAuthors()}" var="author">
+                                            <span><a href="/listbook/author/${author.getAid()}">${author.getFirstname()}&nbsp;${author.getLastname()}</a></span>
+                                        </c:forEach>
+                                    </p>
+                                    <p>${book.getDescription()}</p>
+                                    <%--<p><span class="mar_left">23k</span><span class="red mar_left">35454</span></p>--%>
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
                 </li>
             </c:forEach>
+        </ul><!--内容区-->
 
-        </ul><!--内容区结束-->
-        <div><!--右边-->
-            <script>window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdPic":"","bdStyle":"0","bdSize":"16"},"selectShare":{"bdContainerClass":null,"bdSelectMiniList":["qzone","tsina","tqq","renren","weixin"]}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
-            </script><!--划词分享-->
-        </div>
-<%--        <div>--%>
-<%--            <ul class="page clear">--%>
-<%--                <li>首页</li>--%>
-<%--                <li>上一页</li>--%>
-<%--                <li><a href="javascript:;" class="thispage">1</a></li>--%>
-<%--                <li><a href="javascript:;">2</a></li>--%>
-<%--                <li><a href="javascript:;">3</a></li>--%>
-<%--                <li><a href="javascript:;">4</a></li>--%>
-<%--                <li><a href="javascript:;">5</a></li>--%>
-<%--                <li><a href="javascript:;">下一页</a></li>--%>
-<%--                <li><a href="javascript:;">尾页</a></li>--%>
-<%--                <li class="tz"><select>--%>
-<%--                    <option value="1">1</option>--%>
-<%--                    <option value="1">1</option>--%>
-<%--                    <option value="1">1</option>--%>
-<%--                </select><a href="javascript:;">跳转</a>--%>
-<%--                </li>--%>
-<%--            </ul><!--分页-->--%>
-<%--        </div>--%>
+        <ul class="page clear">
+            <li>首页</li>
+            <li>上一页</li>
+            <li><a href="javascript:;" class="thispage">1</a></li>
+            <li><a href="javascript:;">2</a></li>
+            <li><a href="javascript:;">3</a></li>
+            <li><a href="javascript:;">4</a></li>
+            <li><a href="javascript:;">5</a></li>
+            <li><a href="javascript:;">下一页</a></li>
+            <li><a href="javascript:;">尾页</a></li>
+            <li class="tz"><select>
+                <option value="1">1</option>
+                <option value="1">1</option>
+                <option value="1">1</option>
+            </select><a href="javascript:;">跳转</a>
+            </li>
+        </ul><!--分页-->
 
-    </div><!--右边结束-->
+
+    </div>
 
     <div class="list2">
         <div class="one">

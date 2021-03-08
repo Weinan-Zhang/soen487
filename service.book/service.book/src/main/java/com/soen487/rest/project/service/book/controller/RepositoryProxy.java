@@ -27,4 +27,8 @@ public interface RepositoryProxy {
     com.soen487.rest.project.repository.core.configuration.ServiceResponse<Long> updateBook(@RequestBody String bookStr, @Valid @Pattern(regexp = "\\d+") @RequestParam("bid") long bid);
     @DeleteMapping("book/delete")
     com.soen487.rest.project.repository.core.configuration.ServiceResponse<Long> deleteBook(@Valid @Pattern(regexp = "\\d+") @RequestParam(name="bid") long bid);
+    @GetMapping("author/{aid}")
+    com.soen487.rest.project.repository.core.configuration.ServiceResponse<com.soen487.rest.project.repository.core.entity.Author> authorDetail(@PathVariable("aid") long aid);
+    @PostMapping("book/search")
+    com.soen487.rest.project.repository.core.configuration.ServiceResponse<List<com.soen487.rest.project.repository.core.entity.Book>> searchByTitleOrAuthorName(@RequestParam(name="keyword") String keyword);
 }

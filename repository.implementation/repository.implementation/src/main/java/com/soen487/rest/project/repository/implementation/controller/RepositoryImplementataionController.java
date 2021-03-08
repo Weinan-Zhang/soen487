@@ -39,6 +39,8 @@ import java.sql.Timestamp;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 public class RepositoryImplementataionController {
@@ -524,6 +526,29 @@ public class RepositoryImplementataionController {
             throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
         }
         return com.soen487.rest.project.repository.core.configuration.ServiceResponse.success(ReturnCode.SUCCESS, book);
+    }
+
+    @GetMapping("author/{aid}")
+    public com.soen487.rest.project.repository.core.configuration.ServiceResponse<com.soen487.rest.project.repository.core.entity.Author> authorDetail(@PathVariable("aid") long aid){
+        com.soen487.rest.project.repository.core.entity.Author author = this.authorRepository.findByAid(aid);
+        if(author==null){
+            throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
+        }
+        return(com.soen487.rest.project.repository.core.configuration.ServiceResponse.success(ReturnCode.SUCCESS, author));
+    }
+
+    @PostMapping("book/search")
+    public ServiceResponse<List<com.soen487.rest.project.repository.core.entity.Book>> searchByTitleOrAuthorName(@RequestParam(name="keyword") String keyword){
+        List<com.soen487.rest.project.repository.core.entity.Book> booksByTitle = this.bookRepository.findAllByTitleIgnoreCaseContaining(keyword);
+        List<com.soen487.rest.project.repository.core.entity.Author> authorsByName = this.authorRepository.findAllByFirstnameIgnoreCaseContainingOrLastnameIgnoreCaseContainingOrMiddlenameIgnoreCaseContaining(keyword, keyword, keyword);
+        Set<com.soen487.rest.project.repository.core.entity.Book> bookSetByAuthor = authorsByName.stream().map(Author::getBooks).flatMap(List::stream).collect(Collectors.toSet());
+        Set<com.soen487.rest.project.repository.core.entity.Book> bookSetByTitle = booksByTitle.stream().collect(Collectors.toSet());
+        Set<com.soen487.rest.project.repository.core.entity.Book> mergedSet = com.soen487.rest.project.repository.core.util.CommonUtils.mergeSets(bookSetByAuthor, bookSetByTitle);
+        List<com.soen487.rest.project.repository.core.entity.Book> books = mergedSet.stream().collect(Collectors.toList());
+        if(books==null){
+            throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
+        }
+        return(com.soen487.rest.project.repository.core.configuration.ServiceResponse.success(ReturnCode.SUCCESS, books));
     }
 
     @GetMapping("log/list")

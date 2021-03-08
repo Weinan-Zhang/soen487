@@ -14,5 +14,5 @@ public interface BookRepository extends JpaRepository<com.soen487.rest.project.r
     com.soen487.rest.project.repository.core.entity.Book findByBid(long bid);
     com.soen487.rest.project.repository.core.entity.Book saveAndFlush(com.soen487.rest.project.repository.core.entity.Book book);
     long deleteByBid(long bid);
-
+    List<com.soen487.rest.project.repository.core.entity.Book> findAllByTitleIgnoreCaseContaining(String title);
 }

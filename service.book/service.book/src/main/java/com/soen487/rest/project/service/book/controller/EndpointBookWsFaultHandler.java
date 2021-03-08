@@ -14,4 +14,11 @@ public class EndpointBookWsFaultHandler {
         model.addAttribute("info", info);
         return "error";
     }
+
+    @ExceptionHandler(Exception.class)
+    public String handleAllException(Model model, Exception e){
+        String info = e.getMessage();
+        model.addAttribute("info", info);
+        return "error";
+    }
 }

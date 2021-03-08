@@ -23,4 +23,18 @@ a.icon_down2 span{ background-position:4px -27px;margin-left:18px;}
 .box .list .tit b:nth-of-type(2){ float:right;}
 .box .list .tit b:nth-of-type(3){ float:right; margin-right:20px;}
 
+.box_narrow{width:1100px; margin:20px auto;}
+.box_narrow .list{width:750px; float:left; position:relative;}
+.box_narrow .list .con{ margin:10px 0 10px;}
+.box_narrow .list .con li{ height:20px; line-height:20px; margin-bottom:10px;}
+.box_narrow .list .con li a{ margin-left: 5px;margin-right: 5px;}
+.box_narrow .list .con li a,.box .list .con li sapn,.box .list .con li b{ display:block; float:left;}
+.box_narrow .list .con li .icon_span{float:left; margin-top:5px; margin-right:15px;}
+.box_narrow .list .con li a.single{ width:285px; margin-right:20px;}
+.box_narrow .list .con li:hover{background:#F7F7F9;}
+.box_narrow .list .tit{background:#f5f6fa; height:50px; line-height:50px; width:100%;border: 1px solid #EBEFEF /*#dcdddd*/;
+    padding-left:30px; padding-right:20px; font-size:15px; letter-spacing:1px;}
+.box_narrow .list .tit b:nth-of-type(2){ float:right;}
+.box_narrow .list .tit b:nth-of-type(3){ float:right; margin-right:20px;}
+
 .page{ position:absolute; bottom:40px;}

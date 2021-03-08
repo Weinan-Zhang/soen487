@@ -78,7 +78,7 @@
                     <p><b>Detail information:</b></p>
                     <li><span>Author：</span>
                         <c:forEach items="${book.getAuthors()}" var="author">
-                            &nbsp;<a href="#">${author.getFirstname()} ${author.getLastname()}</a>
+                            &nbsp;<a href="/listbook/author/${author.getAid()}">${author.getFirstname()} ${author.getLastname()}</a>
                         </c:forEach>
                     </li>
                     <li><span>Publisher：</span>${book.getPublisher()}</li>

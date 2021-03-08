@@ -1,7 +1,9 @@
 package com.soen487.rest.project.repository.core.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -9,6 +11,9 @@ import java.util.List;
 
 @Entity
 @Table(name="tab_author")
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "aid", scope = Author.class)
 public class Author implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +26,7 @@ public class Author implements Serializable {
     @Column(name="a_middlename")
     private String middlename;
     @ManyToMany(mappedBy = "authors")
-    @JsonIgnore
+//    @JsonIgnore
     private List<com.soen487.rest.project.repository.core.entity.Book> books;
 
     public Author(){}

@@ -13,19 +13,24 @@ import com.soen487.rest.project.service.book.model.ws.BookChangeLogResponse;
 import com.soen487.rest.project.service.book.model.ws.GetLogResponse;
 import com.soen487.rest.project.service.book.model.ws.LogType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import sun.misc.BASE64Encoder;
 
 import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -137,6 +142,7 @@ public class EndpointBook {
         List<Book> booksMap = serviceResponse.getPayload();
         ObjectMapper mapper = new ObjectMapper();
         List<Book> books = mapper.convertValue(booksMap, new TypeReference<List<Book>>() { });
+
         model.addAttribute("books", books);
         return "booklist";
     }
@@ -254,8 +260,6 @@ public class EndpointBook {
             model.addAllObjects(modelMap);
             return  model;
         }
-
-
         return new ModelAndView("redirect:" + "/bookdetail/" + String.valueOf(bid));
     }
 
@@ -282,6 +286,21 @@ public class EndpointBook {
         return new ModelAndView("redirect:/listbook");
     }
 
+    @RequestMapping(value="listbook/author/{aid}", method=RequestMethod.GET)
+    public String listBookByAuthor(Model model, @PathVariable(name="aid") long aid){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<com.soen487.rest.project.repository.core.entity.Author> response = this.repositoryProxy.authorDetail(aid);
+        if(response.getCode()<200 || response.getCode()>299) {
+            String info = response.getMessage();
+            model.addAttribute("info", info);
+            return "error";
+        }
+        com.soen487.rest.project.repository.core.entity.Author authorMap = response.getPayload();
+        ObjectMapper mapper = new ObjectMapper();
+        com.soen487.rest.project.repository.core.entity.Author author = mapper.convertValue(authorMap, new TypeReference<com.soen487.rest.project.repository.core.entity.Author>() { });
+        model.addAttribute("author", author);
+        return "booklistbyauthor";
+    }
+
     @RequestMapping(value="signup", method=RequestMethod.GET)
     public String userSignup(Model model){
         String info = "We are working hard on this functionality, be patient!";
@@ -303,7 +322,7 @@ public class EndpointBook {
         return "error";
     }
 
-    @RequestMapping(value="/loglist", method=RequestMethod.GET)
+    @RequestMapping(value="/listlog", method=RequestMethod.GET)
     public String viewLogs(Model model){
         GetLogResponse response = this.bookChangLogClient.getLog(null,null,null);
 
@@ -315,16 +334,16 @@ public class EndpointBook {
         return "loglist";
     }
 
-    @RequestMapping(value="/loglist", method=RequestMethod.POST)
+    @RequestMapping(value="/queryloglist", method=RequestMethod.POST)
     public String queryLogs(Model model,
-                          @RequestParam(name="stime") String stimeStr,
-                          @RequestParam(name="etime") String etimeStr,
-                          @RequestParam(name="logType") String logTypeStr) throws DatatypeConfigurationException {
+                          @RequestParam(name="stime", required=false) String stimeStr,
+                          @RequestParam(name="etime", required=false) String etimeStr,
+                          @RequestParam(name="logType", required=false) String logTypeStr) throws DatatypeConfigurationException {
 
-        GetLogResponse response = this.bookChangLogClient.getLog(
-                com.soen487.rest.project.repository.core.util.CommonUtils.formatXMLGregorianCalendar(stimeStr),
-                com.soen487.rest.project.repository.core.util.CommonUtils.formatXMLGregorianCalendar(etimeStr),
-                LogType.valueOf(logTypeStr));
+        XMLGregorianCalendar stimeVar = stimeStr.equals("") ? null : com.soen487.rest.project.repository.core.util.CommonUtils.formatXMLGregorianCalendar(stimeStr);
+        XMLGregorianCalendar etimeVar = etimeStr.equals("") ? null : com.soen487.rest.project.repository.core.util.CommonUtils.formatXMLGregorianCalendar(etimeStr);
+        LogType logType = logTypeStr.equals("") ? LogType.valueOf("ALL") : LogType.valueOf(logTypeStr);
+        GetLogResponse response = this.bookChangLogClient.getLog(stimeVar, etimeVar, logType);
 
         if(response.getLogDtos()==null || response.getLogDtos().size()==0){
             throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
@@ -332,5 +351,24 @@ public class EndpointBook {
         List<BookChangeLogDto> logDtos = response.getLogDtos();
         model.addAttribute("logs", logDtos);
         return "loglist";
+    }
+
+    @RequestMapping(value="/book/search", method=RequestMethod.POST)
+    public String queryLogs(Model model,
+                            @RequestParam(name="keyword", required=false) String keyword){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<List<Book>> response =
+                this.repositoryProxy.searchByTitleOrAuthorName(keyword);
+        if(response.getCode()<200 || response.getCode()>299) {
+            String info = response.getMessage();
+            model.addAttribute("info", info);
+            return "error";
+        }
+
+        List<Book> booksMap = response.getPayload();
+        ObjectMapper mapper = new ObjectMapper();
+        List<Book> books = mapper.convertValue(booksMap, new TypeReference<List<Book>>() { });
+
+        model.addAttribute("books", books);
+        return "booklist";
     }
 }

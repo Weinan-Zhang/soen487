@@ -1,7 +1,9 @@
 package com.soen487.rest.project.repository.core.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -12,6 +14,9 @@ import java.util.List;
                                 @Index(columnList="b_title"),
                                 @Index(columnList="b_publisher")}
     )
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "bid", scope=Book.class)
 public class Book implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,8 +32,6 @@ public class Book implements Serializable {
     private String language;
     @Column(name="b_isbn13", unique=true)
     private String isbn13;
-//    @Column(name="b_isbn10", unique=true)
-//    private String isbn10;
     @Column(name="b_cover_img")
     private String coverImg;
     @Column(name="b_original_price")

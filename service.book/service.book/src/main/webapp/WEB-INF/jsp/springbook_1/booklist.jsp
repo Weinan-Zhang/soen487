@@ -50,7 +50,7 @@
                                     <p>${book.getPublisher()}</p>
                                     <p>
                                         <c:forEach items="${book.getAuthors()}" var="author">
-                                            <span><a href="#">${author.getFirstname()}&nbsp;${author.getLastname()}</a></span>
+                                            <span><a href="/listbook/author/${author.getAid()}">${author.getFirstname()}&nbsp;${author.getLastname()}</a></span>
                                         </c:forEach>
                                     </p>
                                     <p>${book.getDescription()}</p>
