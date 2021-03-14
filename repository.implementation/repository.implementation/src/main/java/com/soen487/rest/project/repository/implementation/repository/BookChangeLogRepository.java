@@ -1,4 +1,4 @@
-package com.soen487.rest.project.repository.implementation.dao;
+package com.soen487.rest.project.repository.implementation.repository;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,5 +12,5 @@ import java.util.List;
 public interface BookChangeLogRepository extends JpaRepository<com.soen487.rest.project.repository.core.entity.BookChangeLog, Long>, JpaSpecificationExecutor {
     com.soen487.rest.project.repository.core.entity.BookChangeLog save(com.soen487.rest.project.repository.core.entity.BookChangeLog bookChangeLog);
     List<com.soen487.rest.project.repository.core.entity.BookChangeLog> findAllBy();
-    List<com.soen487.rest.project.repository.core.entity.BookChangeLog> findAll(Specification var1);
+    List<com.soen487.rest.project.repository.core.entity.BookChangeLog> findAll(Specification specification);
 }

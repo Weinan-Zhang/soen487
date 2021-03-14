@@ -1,13 +1,11 @@
-package com.soen487.rest.project.repository.implementation.dao;
+package com.soen487.rest.project.repository.implementation.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
+
 public interface ArtistRepository  extends CrudRepository<com.soen487.rest.project.repository.core.entity.Artist, Long>, ArtistRepositoryCustom {
 //    @Query("SELECT ar.nickname, ar.firstname, ar.lastname FROM Artist AS ar")
 //    public List<com.soen487.rest.project.repository.core.entity.Artist> getNicknameAndFirstnameAndLastname();

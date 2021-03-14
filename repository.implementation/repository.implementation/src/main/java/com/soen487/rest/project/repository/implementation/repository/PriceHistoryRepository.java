@@ -1,4 +1,4 @@
-package com.soen487.rest.project.repository.implementation.dao;
+package com.soen487.rest.project.repository.implementation.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

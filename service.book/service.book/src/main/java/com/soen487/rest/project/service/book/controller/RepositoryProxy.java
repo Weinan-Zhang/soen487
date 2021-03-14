@@ -15,6 +15,8 @@ import java.util.List;
 @FeignClient("repository.implementation")
 @RibbonClient(name="repository.implementation")
 public interface RepositoryProxy {
+    @GetMapping("list/category")
+    com.soen487.rest.project.repository.core.configuration.ServiceResponse<List<com.soen487.rest.project.repository.core.entity.Category>> getCategoryList();
     @PostMapping("book/add")
     com.soen487.rest.project.repository.core.configuration.ServiceResponse<Long> addBook(@RequestBody String book);
     @PostMapping(value = "/img/uoload")

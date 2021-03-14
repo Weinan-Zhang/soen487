@@ -30,6 +30,9 @@
             <p><span>Title:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <input type="text" name="title" value="" class="text_1" placeholder="book title" autocomplete="off"/>
             </p>
+            <p><span>Category:&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <input type="text" name="category" value="" class="text_1" placeholder="Literature" autocomplete="off"/>
+            </p>
             <p><span>Authors:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <input type="text" name="authors"  class="text_1" placeholder="please separate authors by commas(',')" autocomplete="off"/>
             </p>

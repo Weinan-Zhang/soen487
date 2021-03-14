@@ -62,70 +62,9 @@
                 </li>
             </c:forEach>
         </ul><!--内容区-->
-
-        <ul class="page clear">
-            <li>首页</li>
-            <li>上一页</li>
-            <li><a href="javascript:;" class="thispage">1</a></li>
-            <li><a href="javascript:;">2</a></li>
-            <li><a href="javascript:;">3</a></li>
-            <li><a href="javascript:;">4</a></li>
-            <li><a href="javascript:;">5</a></li>
-            <li><a href="javascript:;">下一页</a></li>
-            <li><a href="javascript:;">尾页</a></li>
-            <li class="tz"><select>
-                <option value="1">1</option>
-                <option value="1">1</option>
-                <option value="1">1</option>
-            </select><a href="javascript:;">跳转</a>
-            </li>
-        </ul><!--分页-->
-
-
+        <jsp:include page="paging.jsp"></jsp:include>
     </div>
-
-    <div class="list2">
-        <div class="one">
-            <p>新书上架</p>
-            <div class="notice">
-                <ul>
-                    <li><a href="javascrip:;">文化苦旅</a></li>
-                    <li><a href="javascrip:;">谢谢你曾来过我的世界</a></li>
-                    <li><a href="javascrip:;">文化苦旅</a></li>
-                    <li><a href="javascrip:;">文化苦旅</a></li>
-                    <li><a href="javascrip:;">文化苦旅</a></li>
-                    <li><a href="javascrip:;">文化苦旅</a></li>
-                    <li><a href="javascrip:;">文化苦旅</a></li>
-                    <!-- <li><a href="javascrip:;">文化苦旅</a></li>
-                         <li><a href="javascrip:;">文化苦旅</a></li>
-                         <li><a href="javascrip:;">文化苦旅</a></li>-->
-                </ul>
-            </div>
-        </div><!--新书上架结束-->
-
-        <div class="two">
-            <p><a href="javascript:;" class="active">本周最热排行</a><a href="javascript:;">本月最热排行</a></p>
-            <ul class="active">
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">谢谢你曾来过我的世界</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-            </ul>
-            <ul>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">谢谢你曾来过我的世界</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">谢谢你曾来过我的世界</a></li>
-            </ul>
-        </div><!--tab切换-->
-
-    </div>
+    <jsp:include page="right_side_list.jsp"></jsp:include>
 </div><!--左边结束-->
 <jsp:include page="footer.jsp"></jsp:include>
 </body>

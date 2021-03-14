@@ -1,7 +1,5 @@
 package com.soen487.rest.project.repository.implementation.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.soen487.rest.project.repository.core.configuration.LogType;
 import com.soen487.rest.project.repository.core.configuration.ReturnCode;
@@ -9,34 +7,20 @@ import com.soen487.rest.project.repository.core.configuration.ServiceResponse;
 import com.soen487.rest.project.repository.core.entity.Author;
 import com.soen487.rest.project.repository.core.entity.BookChangeLog;
 import com.soen487.rest.project.repository.core.entity.PriceHistory;
-import com.soen487.rest.project.repository.implementation.dao.*;
+import com.soen487.rest.project.repository.implementation.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import sun.misc.BASE64Decoder;
-
 import javax.imageio.ImageIO;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
-import javax.ws.rs.FormParam;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.sql.Timestamp;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
@@ -44,10 +28,6 @@ import java.util.stream.Collectors;
 
 @RestController
 public class RepositoryImplementataionController {
-//    @Autowired
-//    AlbumRepository albumRepository;
-//    @Autowired
-//    ArtistRepository artistRepository;
     @Autowired
     BookRepository bookRepository;
     @Autowired
@@ -60,136 +40,8 @@ public class RepositoryImplementataionController {
     PriceHistoryRepository priceHistoryRepository;
     @Autowired
     BookChangeLogRepository bookChangeLogRepository;
-
-//    @GetMapping("/artist/list")
-//    public List<com.soen487.rest.project.repository.core.entity.projection.ArtistDto> retrieveNamesOfAllArtists() {
-//        if(!this.artistRepository.existsAllBy()){
-//            return null;
-//        }
-//        return this.artistRepository.findAllBy();
-//    }
-//
-//    @GetMapping("/artist/detail/{nickname}")
-//    public com.soen487.rest.project.repository.core.entity.Artist retrieveArtistDetail(@PathVariable String nickname) throws UnsupportedEncodingException {
-//        if(!this.artistRepository.existsByNickname(nickname)){
-//            return null;
-//        }
-//        return this.artistRepository.findByNickname(nickname);
-//    }
-//
-//    @Transactional
-//    @PostMapping("/artist/add")
-//    public com.soen487.rest.project.repository.core.entity.Artist addArtist(@RequestBody com.soen487.rest.project.repository.core.entity.Artist artist){
-//        if(this.artistRepository.existsByNickname(artist.getNickname())){
-//            return null;
-//        }
-//        com.soen487.rest.project.repository.core.entity.Artist savedArtist = this.artistRepository.save(artist);
-//        return savedArtist;
-//    }
-//
-//    @Transactional
-//    @PutMapping("/artist/update")
-//    public com.soen487.rest.project.repository.core.entity.Artist updateArtist(@RequestBody com.soen487.rest.project.repository.core.entity.Artist artist){
-//        if(!this.artistRepository.existsByNickname(artist.getNickname())){
-//            return null;
-//        }
-//        com.soen487.rest.project.repository.core.entity.Artist existingArtist = this.artistRepository.findByNickname(artist.getNickname());
-//        existingArtist.setFirstname(artist.getFirstname());
-//        existingArtist.setLastname(artist.getLastname());
-//        existingArtist.setBiography(artist.getBiography());
-//        this.artistRepository.save(existingArtist);
-//        return existingArtist;
-//    }
-//
-//    @Transactional
-//    @DeleteMapping("artist/delete/{nickname}")
-//    public long deleteArtist(@PathVariable String nickname){
-//        long id = -1l;
-//        if(!this.artistRepository.existsByNickname(nickname)){
-//            return id;
-//        }
-//        com.soen487.rest.project.repository.core.entity.Artist artist = this.artistRepository.findByNickname(nickname);
-//        id = artist.getId();
-//        this.artistRepository.deleteById(id);
-//        return id;
-//    }
-//
-//    @GetMapping("album/list")
-//    public List<com.soen487.rest.project.repository.core.entity.projection.AlbumDto> retrieveAllAlbums(){
-//        if(!this.albumRepository.existsAllBy()){
-//            return null;
-//        }
-//        return this.albumRepository.findAllBy();
-//    }
-//
-//    @GetMapping("album/detail/{isrc}")
-//    public com.soen487.rest.project.repository.core.entity.Album retrieveAlbum(@PathVariable("isrc") String isrc){
-//        if(!this.albumRepository.existsByIsrc(isrc)){
-//            return null;
-//        }
-//        return this.albumRepository.findByIsrc(isrc);
-//    }
-//
-//    @Transactional
-//    @PostMapping("album/add")
-//    public com.soen487.rest.project.repository.core.entity.Album addAlbum(@RequestBody com.soen487.rest.project.repository.core.entity.Album album){
-//        if(this.albumRepository.existsByIsrc(album.getISRC())){
-//            return null;
-//        }
-//        com.soen487.rest.project.repository.core.entity.Artist artist = artistRepository.findByNickname("unknown artist");
-//        if(album.getArtist()!=null){
-//            if(!artistRepository.existsByNickname(artist.getNickname())){
-//                artist = album.getArtist();
-//            }
-//        }
-//
-//        long id = this.artistRepository.findAllByNickname(artist.getNickname()).getId();
-//        artist.setId(id);
-//        album.setArtist(artist);
-//        return this.albumRepository.save(album);
-//    }
-//
-//    @Transactional
-//    @PutMapping("album/update")
-//    public com.soen487.rest.project.repository.core.entity.Album updateAlbum(@RequestBody com.soen487.rest.project.repository.core.entity.Album album){
-//        if(!this.albumRepository.existsByIsrc(album.getISRC())){
-//            return null;
-//        }
-//        com.soen487.rest.project.repository.core.entity.Album existingAlbum = this.albumRepository.findByIsrc(album.getISRC());
-//
-//        if(album.getArtist()!=null){
-//            com.soen487.rest.project.repository.core.entity.Artist artist;
-//            if(!this.artistRepository.existsByNickname(album.getArtist().getNickname())){
-//                artist = this.artistRepository.save(album.getArtist());
-//            }
-//            else {
-//                artist = this.artistRepository.findAllByNickname(album.getArtist().getNickname());
-//            }
-//            existingAlbum.setArtist(artist);
-//        }
-//        else {
-//            existingAlbum.setArtist(null);
-//        }
-//        existingAlbum.setDescription(album.getDescription());
-//        existingAlbum.setReleased_year(album.getReleased_year());
-//        existingAlbum.setTitle(album.getTitle());
-//        this.albumRepository.save(existingAlbum);
-//
-//        return existingAlbum;
-//    }
-//
-//    @Transactional
-//    @DeleteMapping("album/delete/{isrc}")
-//    public long deleteAlbum(@PathVariable("isrc") String isrc){
-//        long id=-1l;
-//        if(!this.albumRepository.existsByIsrc(isrc)){
-//            return id;
-//        }
-//        com.soen487.rest.project.repository.core.entity.Album album = this.albumRepository.findByIsrc(isrc);
-//        id = album.getId();
-//        this.albumRepository.deleteById(id);
-//        return id;
-//    }
+    @Autowired
+    CategoryRepository categoryRepository;
 
     @Transactional
     @PostMapping("book/add")
@@ -198,10 +50,13 @@ public class RepositoryImplementataionController {
 
         Gson gsonMapper = new Gson();
         com.soen487.rest.project.repository.core.entity.Book book = gsonMapper.fromJson(bookStr, com.soen487.rest.project.repository.core.entity.Book.class);
-        if(book.getIsbn13()==null || book.getIsbn13().equals("")){
+        if(book.getIsbn13()==null || "".equals(book.getIsbn13())){
             throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.KEY_ARGS_NOT_PROVIDED);
         }
-        if(book.getSeller()==null || (book.getSeller().getName().equals(""))){
+        if(book.getSeller()==null || ("".equals(book.getSeller().getName()))){
+            throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.KEY_ARGS_NOT_PROVIDED);
+        }
+        if(book.getCategory()==null || ("".equals(book.getCategory()))){
             throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.KEY_ARGS_NOT_PROVIDED);
         }
 
@@ -224,12 +79,17 @@ public class RepositoryImplementataionController {
                     it.set(authorPersisted);
                 }
             }
-            if(book.getCoverImg()==null || book.getCoverImg().equals(""))
+            if(book.getCoverImg()==null || "".equals(book.getCoverImg()))
                 book.setCoverImg(NO_COVER_IMG);
+
+            com.soen487.rest.project.repository.core.entity.Category category = book.getCategory();
+            long cid = this.categoryRepository.findByName(category.getName()).getCid();
+            category.setCid(cid);
+
             bookPersisted = this.bookRepository.saveAndFlush(book);
         }
         else {
-            // 如果图书已经存在，更新价格和书商信息
+            // 如果图书已经存在，获取图书对象
             bookPersisted = this.bookRepository.findByIsbn13(book.getIsbn13());
         }
 
@@ -385,7 +245,7 @@ public class RepositoryImplementataionController {
     @Transactional
     @PutMapping("book/update")
     public com.soen487.rest.project.repository.core.configuration.ServiceResponse<Long> updateBook(@RequestBody String bookStr, @Valid @Pattern(regexp = "\\d+") @RequestParam("bid") long bid){
-        if(bookStr.equals("") || bookStr==null){
+        if("".equals(bookStr) || bookStr==null){
             throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.KEY_ARGS_NOT_PROVIDED);
         }
         Gson gsonMapper = new Gson();
@@ -393,7 +253,7 @@ public class RepositoryImplementataionController {
         if(book==null) {
             throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.KEY_ARGS_NOT_PROVIDED);
         }
-        if(book.getTitle()==null || book.getTitle().equals("")){
+        if(book.getTitle()==null || "".equals(book.getTitle())){
             throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.KEY_ARGS_NOT_PROVIDED);
         }
         if(!this.bookRepository.existsByBid(bid)) {
@@ -417,6 +277,8 @@ public class RepositoryImplementataionController {
             bookPersisted.setPublisher(book.getPublisher());
         if(book.getTitle()!=null && !book.getTitle().equals(""))
             bookPersisted.setTitle(book.getTitle());
+        if(book.getCategory()!=null && this.categoryRepository.existsByName(book.getCategory().getName()))
+            bookPersisted.setCategory(book.getCategory());
 
         // 更新作者
         if(book.getAuthors()!=null && book.getAuthors().size()>0){
@@ -581,5 +443,17 @@ public class RepositoryImplementataionController {
             throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
         }
         return com.soen487.rest.project.repository.core.configuration.ServiceResponse.success(ReturnCode.FOUND, logs);
+    }
+
+    @GetMapping("list/category")
+    ServiceResponse<List<com.soen487.rest.project.repository.core.entity.Category>> getCategoryList(){
+        List<com.soen487.rest.project.repository.core.entity.Category> categories = this.categoryRepository.findAll((Specification< com.soen487.rest.project.repository.core.entity.Category>) (root, criteriaQuery, criteriaBuilder) ->{
+            Predicate p1 = criteriaBuilder.equal(root.get("level"), 2);
+            return criteriaBuilder.and(p1);
+        });
+        if(categories==null || categories.size()==0){
+            throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
+        }
+        return ServiceResponse.success(ReturnCode.SUCCESS, categories);
     }
 }

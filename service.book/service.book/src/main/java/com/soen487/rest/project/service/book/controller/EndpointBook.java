@@ -8,10 +8,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import com.soen487.rest.project.repository.core.configuration.ReturnCode;
 import com.soen487.rest.project.repository.core.entity.Book;
+import com.soen487.rest.project.repository.core.entity.Category;
 import com.soen487.rest.project.service.book.model.ws.BookChangeLogDto;
 import com.soen487.rest.project.service.book.model.ws.BookChangeLogResponse;
 import com.soen487.rest.project.service.book.model.ws.GetLogResponse;
 import com.soen487.rest.project.service.book.model.ws.LogType;
+import com.soen487.rest.project.service.book.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.http.ResponseEntity;
@@ -41,17 +43,26 @@ public class EndpointBook {
     private RepositoryProxy repositoryProxy;
     @Autowired
     private BookChangLogClient bookChangLogClient;
+    @Autowired
+    private CategoryService categoryService;
 
     @RequestMapping(value="/", method= RequestMethod.GET)
-    public String viewWelcome(){
+    public String viewWelcome(Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
         return "index";
     }
 
     @RequestMapping(value="/addbook", method=RequestMethod.GET)
-    public String viewAddBook(){ return "addbook"; }
+    public String viewAddBook(Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+        return "addbook";
+    }
 
     @RequestMapping(value="/book/add", method=RequestMethod.POST)
     public ModelAndView addBook(@RequestParam("title") String title,
+                          @RequestParam("category") String category,
                           @RequestParam("authors") String authors,
                           @RequestParam("publisher") String publisher,
                           @RequestParam("format") String format,
@@ -74,6 +85,9 @@ public class EndpointBook {
         }
         com.soen487.rest.project.repository.core.entity.Book book =
                 new com.soen487.rest.project.repository.core.entity.Book(title, seller, currentPrice);
+        com.soen487.rest.project.repository.core.entity.Category bookCategory = new Category(category, 1);
+        bookCategory.setCid(2);
+        book.setCategory( bookCategory);
         book.setAuthors(authorList);
         book.setPublisher(publisher);
         book.setOriginalPrice(10.01);
@@ -83,18 +97,32 @@ public class EndpointBook {
         book.setDescription(description);
         if(file!=null && !file.isEmpty()){
             book.setCoverImg(file.getOriginalFilename());
+        }
 
+        Gson gsonMaper = new Gson();
+        String bookStr = gsonMaper.toJson(book);
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse response = this.repositoryProxy.addBook(bookStr);
+        if(response.getCode()<200 || response.getCode()>299){
+            String info = response.getMessage();
+            ModelAndView model = new ModelAndView("error");
+            ModelMap modelMap = new ModelMap();
+            modelMap.addAttribute("info", info);
+            model.addAllObjects(modelMap);
+            return  model;
+        }
+        long bid = (long) response.getPayload();
+
+        if(book.getCoverImg()!=null && !"".equals(book.getCoverImg())){
             BASE64Encoder encoder = new sun.misc.BASE64Encoder();
             byte[] bytes = file.getBytes();
             String base64String = encoder.encode(bytes).trim();
             String originalFilename = file.getOriginalFilename();
             Gson gsonMapper = new Gson();
-            com.soen487.rest.project.repository.core.configuration.ServiceResponse response =
+            response =
                     this.repositoryProxy.uploadImg(gsonMapper.toJson(new com.soen487.rest.project.repository.core.DTO.EncodedImg(base64String, originalFilename)));
 
-            System.out.println("response code: " + response.getCode());
             if(response.getCode()<200 || response.getCode()>299){
-                String info = "Unknown error occured when processing image uploaded!";
+                String info = response.getMessage();
                 ModelAndView model = new ModelAndView("error");
                 ModelMap modelMap = new ModelMap();
                 modelMap.addAttribute("info", info);
@@ -102,20 +130,6 @@ public class EndpointBook {
                 return  model;
             }
         }
-
-        Gson gsonMaper = new Gson();
-        String bookStr = gsonMaper.toJson(book);
-        com.soen487.rest.project.repository.core.configuration.ServiceResponse response = this.repositoryProxy.addBook(bookStr);
-        if(response.getCode()<200 || response.getCode()>299){
-            String info = "Unknown error occured when processing book persistence!";
-            ModelAndView model = new ModelAndView("error");
-            ModelMap modelMap = new ModelMap();
-            modelMap.addAttribute("info", info);
-            model.addAllObjects(modelMap);
-            return  model;
-        }
-
-        long bid = (long) response.getPayload();
 
         BookChangeLogResponse soapResponse = this.bookChangLogClient.bookChangeLog(LogType.CREATE, bid);
         if(soapResponse.getLid()==-1){
@@ -132,6 +146,9 @@ public class EndpointBook {
 
     @RequestMapping(value="listbook", method=RequestMethod.GET)
     public String listBook(Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+
         com.soen487.rest.project.repository.core.configuration.ServiceResponse<List<Book>> serviceResponse =
                 this.repositoryProxy.listBooks();
         if(serviceResponse.getCode()<200 || serviceResponse.getCode()>299){
@@ -149,6 +166,9 @@ public class EndpointBook {
 
     @RequestMapping(value="bookdetail/{bid}", method=RequestMethod.GET)
     public String detailBook(@PathVariable("bid") long bid, Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+
         com.soen487.rest.project.repository.core.configuration.ServiceResponse<Book> serviceResponse = this.repositoryProxy.detailBook(bid);
         if(serviceResponse.getCode()<200 || serviceResponse.getCode()>299){
             String info = serviceResponse.getMessage();
@@ -164,6 +184,9 @@ public class EndpointBook {
 
     @RequestMapping(value="/modifybook/{bid}", method=RequestMethod.GET)
     public String viewModifyBook(@PathVariable("bid") long bid, Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+
         com.soen487.rest.project.repository.core.configuration.ServiceResponse<Book> serviceResponse = this.repositoryProxy.detailBook(bid);
         if(serviceResponse.getCode()<200 || serviceResponse.getCode()>299){
             String info = serviceResponse.getMessage();
@@ -288,6 +311,9 @@ public class EndpointBook {
 
     @RequestMapping(value="listbook/author/{aid}", method=RequestMethod.GET)
     public String listBookByAuthor(Model model, @PathVariable(name="aid") long aid){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+
         com.soen487.rest.project.repository.core.configuration.ServiceResponse<com.soen487.rest.project.repository.core.entity.Author> response = this.repositoryProxy.authorDetail(aid);
         if(response.getCode()<200 || response.getCode()>299) {
             String info = response.getMessage();
@@ -303,6 +329,9 @@ public class EndpointBook {
 
     @RequestMapping(value="signup", method=RequestMethod.GET)
     public String userSignup(Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+
         String info = "We are working hard on this functionality, be patient!";
         model.addAttribute("info", info);
         return "error";
@@ -310,13 +339,19 @@ public class EndpointBook {
 
     @RequestMapping(value="login", method=RequestMethod.GET)
     public String userLogin(Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+
         String info = "We are working hard on this functionality, be patient!";
         model.addAttribute("info", info);
         return "error";
     }
 
-    @RequestMapping(value="/categorylist/{categoryid}", method=RequestMethod.GET)
+    @RequestMapping(value="/list/category/{categoryid}", method=RequestMethod.GET)
     public String listCategory(@PathVariable("categoryid") long categoryId, Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+
         String info = "We are working hard on this functionality, be patient!";
         model.addAttribute("info", info);
         return "error";
@@ -324,6 +359,9 @@ public class EndpointBook {
 
     @RequestMapping(value="/listlog", method=RequestMethod.GET)
     public String viewLogs(Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+
         GetLogResponse response = this.bookChangLogClient.getLog(null,null,null);
 
         if(response.getLogDtos()==null || response.getLogDtos().size()==0){
@@ -339,6 +377,8 @@ public class EndpointBook {
                           @RequestParam(name="stime", required=false) String stimeStr,
                           @RequestParam(name="etime", required=false) String etimeStr,
                           @RequestParam(name="logType", required=false) String logTypeStr) throws DatatypeConfigurationException {
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
 
         XMLGregorianCalendar stimeVar = stimeStr.equals("") ? null : com.soen487.rest.project.repository.core.util.CommonUtils.formatXMLGregorianCalendar(stimeStr);
         XMLGregorianCalendar etimeVar = etimeStr.equals("") ? null : com.soen487.rest.project.repository.core.util.CommonUtils.formatXMLGregorianCalendar(etimeStr);
@@ -356,6 +396,9 @@ public class EndpointBook {
     @RequestMapping(value="/book/search", method=RequestMethod.POST)
     public String queryLogs(Model model,
                             @RequestParam(name="keyword", required=false) String keyword){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+
         com.soen487.rest.project.repository.core.configuration.ServiceResponse<List<Book>> response =
                 this.repositoryProxy.searchByTitleOrAuthorName(keyword);
         if(response.getCode()<200 || response.getCode()>299) {

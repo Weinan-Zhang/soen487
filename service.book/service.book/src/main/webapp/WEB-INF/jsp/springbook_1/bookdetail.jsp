@@ -98,43 +98,28 @@
 <%--                    <img src="../../../static/springbook_1/img/avatar.jpg"><br/>--%>
 <%--                    <span>1922527784</span>--%>
 <%--                </div>--%>
-                    <table width="40%" align="center">
-                        <tr>
-                            <td >
-                                <form action="/modifybook/${book.getBid()}" method="get" class="kdit_w">
-                                    <span><input type="submit" value="modify" class="ease" /></span>
-                                </form>
-                            </td>
-                            <td>
-                                <form action="/deletebook" method="post" class="kdit_w">
-                                    <span>
-                                        <input type="submit" value="delete" class="ease" >
-                                    </span>
-                                    <input type="hidden" name="bid" value="${book.getBid()}"/>
-                                    <input type="hidden" name="_method" value="delete"/>
-                                </form>
-                            </td>
-                        </tr>
-                    </table>
-
+                <table width="40%" align="center">
+                    <tr>
+                        <td >
+                            <form action="/modifybook/${book.getBid()}" method="get" class="kdit_w">
+                                <span><input type="submit" value="modify" class="ease" /></span>
+                            </form>
+                        </td>
+                        <td>
+                            <form action="/deletebook" method="post" class="kdit_w">
+                                <span>
+                                    <input type="submit" value="delete" class="ease" >
+                                </span>
+                                <input type="hidden" name="bid" value="${book.getBid()}"/>
+                                <input type="hidden" name="_method" value="delete"/>
+                            </form>
+                        </td>
+                    </tr>
+                </table>
             </div>
         </div><!--评论结束-->
-
-
     </div><!--右边结束-->
-    <div class="list2">
-        <div class="three">
-            <p>Other books</p>
-            <ul>
-                <li><a href="javascrip:;">other books 1</a></li>
-                <li><a href="javascrip:;">other books 2</a></li>
-                <li><a href="javascrip:;">other books 3</a></li>
-                <li><a href="javascrip:;">other books 4</a></li>
-                <li><a href="javascrip:;">other books 5</a></li>
-                <li><a href="javascrip:;">other books 6</a></li>
-            </ul>
-        </div>
-    </div><!--左边结束-->
+    <jsp:include page="right_side_list.jsp"></jsp:include>
 </div><!--中间box 结束-->
 <jsp:include page="footer.jsp"></jsp:include>
 </body>

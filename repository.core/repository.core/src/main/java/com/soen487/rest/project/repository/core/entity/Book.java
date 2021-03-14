@@ -45,6 +45,9 @@ public class Book implements Serializable {
     @Transient
     @JsonIgnore
     private com.soen487.rest.project.repository.core.entity.Seller seller;
+    @ManyToOne
+    @JoinColumn(name="b_cid")
+    private com.soen487.rest.project.repository.core.entity.Category category;
     @ManyToMany
     @JoinTable(name = "book_author",
                joinColumns = {@JoinColumn(name="b_bid")},
@@ -115,14 +118,6 @@ public class Book implements Serializable {
         this.isbn13 = isbn13;
     }
 
-//    public String getIsbn10() {
-//        return isbn10;
-//    }
-//
-//    public void setIsbn10(String isbn10) {
-//        this.isbn10 = isbn10;
-//    }
-
     public String getCoverImg() {
         return coverImg;
     }
@@ -144,6 +139,10 @@ public class Book implements Serializable {
     }
 
     public void setDescription(String description) { this.description = description; }
+
+    public com.soen487.rest.project.repository.core.entity.Category getCategory() { return category; }
+
+    public void setCategory(com.soen487.rest.project.repository.core.entity.Category category) { this.category = category; }
 
     public List<com.soen487.rest.project.repository.core.entity.Author> getAuthors() {
         return authors;

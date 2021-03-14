@@ -6,6 +6,7 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <html>
 <head>
     <title>header and navigation bar part</title>
@@ -37,41 +38,15 @@
     <ul class="nav_1 clear">
         <div class="active"></div>
         <li><a href="/">Home</a></li>
-        <li><a href="/categorylist/1">Literature</a>
-            <ul class="clear">
-                <li><a href="/categorylist/2">Literature1</a></li>
-            </ul>
-        </li>
-        <li><a href="/categorylist/3">Sociology</a>
-            <ul class="clear">
-                <li><a href="/categorylist/4">Sociology1</a></li>
-            </ul>
-        </li>
-        <li><a href="/categorylist/5">Psychology</a>
-            <ul class="clear">
-                <li><a href="/categorylist/6">Psychology1</a></li>
-            </ul>
-        </li>
-        <li><a href="/categorylist/7">Economics</a>
-            <ul class="clear">
-                <li><a href="/categorylist/8">Economics1</a></li>
-            </ul>
-        </li>
-        <li><a href="/categorylist/9">Sciences</a>
-            <ul class="clear">
-                <li><a href="/categorylist/10">Sciences1</a></li>
-            </ul>
-        </li>
-        <li><a href="/categorylist/11">History</a>
-            <ul class="clear">
-                <li><a href="/categorylist/12">History1</a></li>
-            </ul>
-        </li>
-        <li><a href="/categorylist/13">Other</a>
-            <ul class="clear">
-                <li><a href="/categorylist/14">Other1</a></li>
-            </ul>
-        </li>
+        <c:forEach items="${categories}" var="category">
+            <li><a href="/list/category/${category.getCid()}">${category.getName()}</a>
+                <ul class="clear">
+                    <c:forEach items="${category.getCategories()}" var="subcategory">
+                        <li><a href="/list/category/${subcategory.getCid()}">${subcategory.getName()}</a></li>
+                    </c:forEach>
+                </ul>
+            </li>
+        </c:forEach>
         <div class="submission">
             <a href="/addbook"><span class="icon_span"></span>Publish new book</a>
         </div>

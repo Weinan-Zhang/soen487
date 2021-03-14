@@ -63,76 +63,14 @@
                     <span>${log.getLogTime()}</span>
                 </li>
             </c:forEach>
-
         </ul><!--内容区结束-->
         <div><!--右边-->
             <script>window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdPic":"","bdStyle":"0","bdSize":"16"},"selectShare":{"bdContainerClass":null,"bdSelectMiniList":["qzone","tsina","tqq","renren","weixin"]}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
             </script><!--划词分享-->
         </div>
-<%--        <div>--%>
-<%--            <ul class="page clear">--%>
-<%--                <li>首页</li>--%>
-<%--                <li>上一页</li>--%>
-<%--                <li><a href="javascript:;" class="thispage">1</a></li>--%>
-<%--                <li><a href="javascript:;">2</a></li>--%>
-<%--                <li><a href="javascript:;">3</a></li>--%>
-<%--                <li><a href="javascript:;">4</a></li>--%>
-<%--                <li><a href="javascript:;">5</a></li>--%>
-<%--                <li><a href="javascript:;">下一页</a></li>--%>
-<%--                <li><a href="javascript:;">尾页</a></li>--%>
-<%--                <li class="tz"><select>--%>
-<%--                    <option value="1">1</option>--%>
-<%--                    <option value="1">1</option>--%>
-<%--                    <option value="1">1</option>--%>
-<%--                </select><a href="javascript:;">跳转</a>--%>
-<%--                </li>--%>
-<%--            </ul><!--分页-->--%>
-<%--        </div>--%>
-
+<%--        <jsp:include page="paging.jsp"></jsp:include>--%>
     </div><!--右边结束-->
-
-    <div class="list2">
-        <div class="one">
-            <p>新书上架</p>
-            <div class="notice">
-                <ul>
-                    <li><a href="javascrip:;">文化苦旅</a></li>
-                    <li><a href="javascrip:;">谢谢你曾来过我的世界</a></li>
-                    <li><a href="javascrip:;">文化苦旅</a></li>
-                    <li><a href="javascrip:;">文化苦旅</a></li>
-                    <li><a href="javascrip:;">文化苦旅</a></li>
-                    <li><a href="javascrip:;">文化苦旅</a></li>
-                    <li><a href="javascrip:;">文化苦旅</a></li>
-                    <!-- <li><a href="javascrip:;">文化苦旅</a></li>
-                         <li><a href="javascrip:;">文化苦旅</a></li>
-                         <li><a href="javascrip:;">文化苦旅</a></li>-->
-                </ul>
-            </div>
-        </div><!--新书上架结束-->
-
-        <div class="two">
-            <p><a href="javascript:;" class="active">本周最热排行</a><a href="javascript:;">本月最热排行</a></p>
-            <ul class="active">
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">谢谢你曾来过我的世界</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-            </ul>
-            <ul>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">谢谢你曾来过我的世界</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">文化苦旅</a></li>
-                <li><a href="javascrip:;">谢谢你曾来过我的世界</a></li>
-            </ul>
-        </div><!--tab切换-->
-
-    </div>
+    <jsp:include page="right_side_list.jsp"></jsp:include>
 </div><!--左边结束-->
 <jsp:include page="footer.jsp"></jsp:include>
 </body>
