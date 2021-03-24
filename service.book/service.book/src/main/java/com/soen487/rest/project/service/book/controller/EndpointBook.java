@@ -414,4 +414,9 @@ public class EndpointBook {
         model.addAttribute("books", books);
         return "booklist";
     }
+
+    @RequestMapping("/login")
+    public String userLogin(){
+        return "hello user";
+    }
 }

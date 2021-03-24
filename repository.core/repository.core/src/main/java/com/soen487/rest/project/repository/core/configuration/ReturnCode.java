@@ -16,7 +16,8 @@ public enum ReturnCode {
     FOUND(HttpStatus.ACCEPTED.value(), "Data required has been found"),
     CREATED(HttpStatus.CREATED.value(), "Data has been successfully created"),
     UPDATED(HttpStatus.CREATED.value(), "Data has been successfully updated"),
-    DELETED(HttpStatus.ACCEPTED.value(), "Data has been successfully deleted");
+    DELETED(HttpStatus.ACCEPTED.value(), "Data has been successfully deleted"),
+    USER_ALREADY_EXISTS(HttpStatus.NOT_ACCEPTABLE.value(), "The username already exists");
 
     private int code;
     private String message;

@@ -8,6 +8,7 @@ import com.soen487.rest.project.repository.core.entity.Author;
 import com.soen487.rest.project.repository.core.entity.BookChangeLog;
 import com.soen487.rest.project.repository.core.entity.PriceHistory;
 import com.soen487.rest.project.repository.implementation.repository.*;
+import com.soen487.rest.project.repository.implementation.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.ClassUtils;
@@ -42,6 +43,9 @@ public class RepositoryImplementataionController {
     BookChangeLogRepository bookChangeLogRepository;
     @Autowired
     CategoryRepository categoryRepository;
+
+    @Autowired
+    UserService userService;
 
     @Transactional
     @PostMapping("book/add")
@@ -455,5 +459,21 @@ public class RepositoryImplementataionController {
             throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
         }
         return ServiceResponse.success(ReturnCode.SUCCESS, categories);
+    }
+
+    @PostMapping("user/add")
+    public ServiceResponse<Long> addUser(@RequestBody com.soen487.rest.project.repository.core.entity.User user) {
+        com.soen487.rest.project.repository.core.entity.User userCreated = this.userService.addUser(user);
+        return ServiceResponse.success(ReturnCode.CREATED, userCreated.getUid());
+    }
+
+    @GetMapping("user/get/{username}")
+    @ResponseBody
+    public ServiceResponse<com.soen487.rest.project.repository.core.entity.User> getUser(@PathVariable(name="username") String username) {
+        com.soen487.rest.project.repository.core.entity.User userPersisted = this.userService.findUserByName(username);
+        if(userPersisted==null){
+            throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
+        }
+        return ServiceResponse.success(ReturnCode.FOUND, userPersisted);
     }
 }
