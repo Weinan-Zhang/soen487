@@ -4,6 +4,7 @@ import com.soen487.rest.project.repository.core.configuration.ReturnCode;
 import com.soen487.rest.project.repository.core.entity.User;
 import com.soen487.rest.project.repository.implementation.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service

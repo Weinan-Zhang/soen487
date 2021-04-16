@@ -10,7 +10,9 @@ import com.soen487.rest.project.repository.core.entity.PriceHistory;
 import com.soen487.rest.project.repository.implementation.repository.*;
 import com.soen487.rest.project.repository.implementation.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.MediaType;
 import org.springframework.util.ClassUtils;
 import org.springframework.web.bind.annotation.*;
 import sun.misc.BASE64Decoder;
@@ -462,9 +464,9 @@ public class RepositoryImplementataionController {
     }
 
     @PostMapping("user/add")
-    public ServiceResponse<Long> addUser(@RequestBody com.soen487.rest.project.repository.core.entity.User user) {
+    public ServiceResponse<com.soen487.rest.project.repository.core.entity.User> addUser(@RequestBody com.soen487.rest.project.repository.core.entity.User user) {
         com.soen487.rest.project.repository.core.entity.User userCreated = this.userService.addUser(user);
-        return ServiceResponse.success(ReturnCode.CREATED, userCreated.getUid());
+        return ServiceResponse.success(ReturnCode.CREATED, userCreated);
     }
 
     @GetMapping("user/get/{username}")
