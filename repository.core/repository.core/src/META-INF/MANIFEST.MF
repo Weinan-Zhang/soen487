@@ -1,0 +1,36 @@
+Manifest-Version: 1.0
+Main-Class: com.soen487.rest.project.repository.core.Application
+Class-Path: spring-context-5.3.4.jar jackson-core-2.11.4.jar spring-boot
+ -starter-2.4.3-20210218.134639-78.jar jaxb-runtime-2.3.3.jar jakarta.ac
+ tivation-1.2.2.jar txw2-2.3.3.jar jandex-2.2.3.Final.jar logback-core-1
+ .2.3.jar javassist-3.27.0-GA.jar hibernate-commons-annotations-5.1.2.Fi
+ nal.jar spring-aspects-5.3.4.jar spring-jdbc-5.3.4.jar spring-boot-star
+ ter-json-2.4.3-20210218.134639-78.jar hibernate-validator-6.1.7.Final.j
+ ar HikariCP-3.4.5.jar jboss-logging-3.4.1.Final.jar jakarta.annotation-
+ api-1.3.5.jar log4j-api-2.13.3.jar jul-to-slf4j-1.7.30.jar jakarta.vali
+ dation-api-2.0.2.jar groovy-all-2.4.15.jar spring-boot-actuator-2.4.3-2
+ 0210218.134639-78.jar tomcat-embed-websocket-9.0.43.jar spring-boot-sta
+ rter-validation-2.4.3-20210218.134639-78.jar jakarta.xml.bind-api-2.3.3
+ .jar spring-orm-5.3.4.jar spring-web-5.3.4.jar spring-data-commons-2.4.
+ 5.jar hibernate-core-5.4.28.Final.jar LatencyUtils-2.0.3.jar jackson-da
+ tatype-jdk8-2.11.4.jar aspectjweaver-1.9.6.jar jakarta.el-3.0.3.jar tom
+ cat-embed-core-9.0.43.jar log4j-to-slf4j-2.13.3.jar spring-boot-starter
+ -data-jpa-2.4.3-20210218.134639-78.jar logback-classic-1.2.3.jar spring
+ -boot-2.4.3-20210218.134639-78.jar jakarta.persistence-api-2.2.3.jar do
+ m4j-2.1.3.jar spring-boot-actuator-autoconfigure-2.4.3-20210218.134639-
+ 78.jar spring-data-jpa-2.4.5.jar spring-jcl-5.3.4.jar spring-boot-start
+ er-tomcat-2.4.3-20210218.134639-78.jar spring-boot-autoconfigure-2.4.3-
+ 20210218.134639-78.jar istack-commons-runtime-3.0.11.jar jackson-module
+ -parameter-names-2.11.4.jar HdrHistogram-2.1.12.jar spring-core-5.3.4.j
+ ar snakeyaml-1.27.jar spring-boot-starter-actuator-2.4.3-20210218.13463
+ 9-78.jar byte-buddy-1.10.20.jar antlr-2.7.7.jar spring-webmvc-5.3.4.jar
+  spring-boot-starter-logging-2.4.3-20210218.134639-78.jar jakarta.trans
+ action-api-1.3.3.jar spring-expression-5.3.4.jar jackson-databind-2.11.
+ 4.jar jackson-datatype-jsr310-2.11.4.jar jackson-annotations-2.11.4.jar
+  spring-boot-starter-jdbc-2.4.3-20210218.134639-78.jar classmate-1.5.1.
+ jar slf4j-api-1.7.30.jar micrometer-core-1.6.4.jar spring-beans-5.3.4.j
+ ar spring-boot-starter-aop-2.4.3-20210218.134639-78.jar spring-boot-sta
+ rter-web-2.4.3-20210218.134639-78.jar jakarta.activation-api-1.2.2.jar 
+ spring-aop-5.3.4.jar spring-boot-devtools-2.4.3-20210218.134639-78.jar 
+ spring-tx-5.3.4.jar
+

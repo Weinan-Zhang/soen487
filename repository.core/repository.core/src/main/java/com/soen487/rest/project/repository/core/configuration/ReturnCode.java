@@ -17,7 +17,11 @@ public enum ReturnCode {
     CREATED(HttpStatus.CREATED.value(), "Data has been successfully created"),
     UPDATED(HttpStatus.CREATED.value(), "Data has been successfully updated"),
     DELETED(HttpStatus.ACCEPTED.value(), "Data has been successfully deleted"),
-    USER_ALREADY_EXISTS(HttpStatus.NOT_ACCEPTABLE.value(), "The username already exists");
+    USER_ALREADY_EXISTS(HttpStatus.NOT_ACCEPTABLE.value(), "The username already exists"),
+    USER_DISABLED(-3, "USER_DISABLED"),
+    INVALID_CREDENTIALS(-4, "INVALID_CREDENTIALS"),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED.value(), "unauthorized operation"),
+    USER_CREATED_FAILURE(-5, "user creation failed.");
 
     private int code;
     private String message;

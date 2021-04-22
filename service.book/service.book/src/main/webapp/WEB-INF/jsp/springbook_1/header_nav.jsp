@@ -10,6 +10,26 @@
 <html>
 <head>
     <title>header and navigation bar part</title>
+    <script src="https://cdn.bootcss.com/axios/0.17.1/axios.min.js"></script>
+    <script>
+        window.onload = function(){
+            let jwt =  localStorage.getItem('jwt');
+            if (jwt=== null) {
+                document.querySelector('#logout').style.display = 'none';
+                document.querySelector('#nologin').style.display = 'block';
+            } else {
+                document.querySelector('#logout').style.display = 'block';
+                document.querySelector('#nologin').style.display = 'none';
+            }
+        }
+
+        function logout(){
+            localStorage.removeItem('jwt');
+            // document.querySelector('#logout').style.display = 'none';
+            // document.querySelector('#nologin').style.display = 'block';
+            // window.location = "/login"
+        }
+    </script>
 </head>
 <body>
 <header class="clear">
@@ -26,10 +46,13 @@
         </form>
     </div>
     <div class="reg">
-        <div class="delu">
+        <div class="delu" id="nologin">
             <a  href="/signup">Sign up</a>
             <span>|</span>
             <a  href="/login">Log in</a>
+        </div>
+        <div class="delu" id="logout">
+            <a  href="<c:url value="/logout" />" onclick="logout()">log out</a>
         </div>
     </div>
 </header><!--头部结束-->

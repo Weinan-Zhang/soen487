@@ -1,7 +1,6 @@
 package com.soen487.rest.project.repository.core.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
+import com.soen487.rest.project.repository.core.configuration.UserGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -21,4 +20,8 @@ public class User implements Serializable {
     private String username;
     @Column(name="u_password")
     private String password;
+    @Column(name="u_email")
+    private String email;
+    @Column(name="u_group")
+    private UserGroup group;
 }

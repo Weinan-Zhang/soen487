@@ -6,6 +6,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -14,14 +15,24 @@ import java.util.ArrayList;
 public class JwtUserDetailsService implements UserDetailsService {
     @Autowired
     RepositoryProxy repositoryProxy;
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        if ("javainuse".equals(username)) {
-            return new User("javainuse", "$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6",
-                    new ArrayList<>());
-        } else {
-            throw new UsernameNotFoundException("User not found with username: " + username);
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<com.soen487.rest.project.repository.core.entity.User> userLoadResponse = this.repositoryProxy.getUser(username);
+        if(userLoadResponse.getCode()<200 || userLoadResponse.getCode()>299) {
+            throw new com.soen487.rest.project.repository.core.exception.ServiceException(userLoadResponse.getCode(), userLoadResponse.getMessage());
         }
+        return new User(userLoadResponse.getPayload().getUsername(), userLoadResponse.getPayload().getPassword(), new ArrayList<>());
+    }
+
+    public com.soen487.rest.project.repository.core.entity.User addUser(com.soen487.rest.project.repository.core.entity.User user) {
+        user.setPassword(this.passwordEncoder.encode(user.getPassword()));
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<com.soen487.rest.project.repository.core.entity.User> userAddResponse = this.repositoryProxy.addUser(user);
+        if(userAddResponse.getCode()<200 || userAddResponse.getCode()>299) {
+            throw new com.soen487.rest.project.repository.core.exception.ServiceException(userAddResponse.getCode(), userAddResponse.getMessage());
+        }
+        return userAddResponse.getPayload();
     }
 }

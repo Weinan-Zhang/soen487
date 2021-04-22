@@ -7,16 +7,27 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import com.soen487.rest.project.repository.core.configuration.ReturnCode;
+import com.soen487.rest.project.repository.core.configuration.UserGroup;
 import com.soen487.rest.project.repository.core.entity.Book;
 import com.soen487.rest.project.repository.core.entity.Category;
+import com.soen487.rest.project.repository.core.entity.User;
 import com.soen487.rest.project.service.book.model.ws.BookChangeLogDto;
 import com.soen487.rest.project.service.book.model.ws.BookChangeLogResponse;
 import com.soen487.rest.project.service.book.model.ws.GetLogResponse;
 import com.soen487.rest.project.service.book.model.ws.LogType;
 import com.soen487.rest.project.service.book.service.CategoryService;
+import com.soen487.rest.project.service.book.service.UserService;
+import com.soen487.rest.project.service.book.utils.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.http.HttpCookie;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.ResponseEntity;
+
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
@@ -26,6 +37,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import sun.misc.BASE64Encoder;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.io.IOException;
@@ -37,14 +51,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Controller
+@RefreshScope
 public class EndpointBook {
+    @Value("${user.role}")
+    private String role;
+
     private static int num_instace_cnt;
     @Autowired
     private RepositoryProxy repositoryProxy;
     @Autowired
     private BookChangLogClient bookChangLogClient;
     @Autowired
+    private GatewayProxy gatewayProxy;
+    @Autowired
     private CategoryService categoryService;
+    @Autowired
+    private UserService userService;
 
     @RequestMapping(value="/", method= RequestMethod.GET)
     public String viewWelcome(Model model){
@@ -101,7 +123,7 @@ public class EndpointBook {
 
         Gson gsonMaper = new Gson();
         String bookStr = gsonMaper.toJson(book);
-        com.soen487.rest.project.repository.core.configuration.ServiceResponse response = this.repositoryProxy.addBook(bookStr);
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse response = this.gatewayProxy.addBook(bookStr);
         if(response.getCode()<200 || response.getCode()>299){
             String info = response.getMessage();
             ModelAndView model = new ModelAndView("error");
@@ -119,7 +141,7 @@ public class EndpointBook {
             String originalFilename = file.getOriginalFilename();
             Gson gsonMapper = new Gson();
             response =
-                    this.repositoryProxy.uploadImg(gsonMapper.toJson(new com.soen487.rest.project.repository.core.DTO.EncodedImg(base64String, originalFilename)));
+                    this.gatewayProxy.uploadImg(gsonMapper.toJson(new com.soen487.rest.project.repository.core.DTO.EncodedImg(base64String, originalFilename)));
 
             if(response.getCode()<200 || response.getCode()>299){
                 String info = response.getMessage();
@@ -131,17 +153,17 @@ public class EndpointBook {
             }
         }
 
-        BookChangeLogResponse soapResponse = this.bookChangLogClient.bookChangeLog(LogType.CREATE, bid);
-        if(soapResponse.getLid()==-1){
-            String info = "error occured during book log insertion!";
-            ModelAndView model = new ModelAndView("error");
-            ModelMap modelMap = new ModelMap();
-            modelMap.addAttribute("info", info);
-            model.addAllObjects(modelMap);
-            return  model;
-        }
+//        BookChangeLogResponse soapResponse = this.bookChangLogClient.bookChangeLog(LogType.CREATE, bid);
+//        if(soapResponse.getLid()==-1){
+//            String info = "error occured during book log insertion!";
+//            ModelAndView model = new ModelAndView("error");
+//            ModelMap modelMap = new ModelMap();
+//            modelMap.addAttribute("info", info);
+//            model.addAllObjects(modelMap);
+//            return  model;
+//        }
 
-        return new ModelAndView("redirect:" + "/bookdetail/" + String.valueOf(bid));
+        return new ModelAndView("redirect:" + "/bookdetail/" + bid);
     }
 
     @RequestMapping(value="listbook", method=RequestMethod.GET)
@@ -150,7 +172,7 @@ public class EndpointBook {
         model.addAttribute("categories", categoryResponse.getPayload());
 
         com.soen487.rest.project.repository.core.configuration.ServiceResponse<List<Book>> serviceResponse =
-                this.repositoryProxy.listBooks();
+                this.gatewayProxy.listBooks();
         if(serviceResponse.getCode()<200 || serviceResponse.getCode()>299){
             String info = serviceResponse.getMessage();
             model.addAttribute("info", info);
@@ -169,7 +191,7 @@ public class EndpointBook {
         com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
         model.addAttribute("categories", categoryResponse.getPayload());
 
-        com.soen487.rest.project.repository.core.configuration.ServiceResponse<Book> serviceResponse = this.repositoryProxy.detailBook(bid);
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<Book> serviceResponse = this.gatewayProxy.detailBook(bid);
         if(serviceResponse.getCode()<200 || serviceResponse.getCode()>299){
             String info = serviceResponse.getMessage();
             model.addAttribute("info", info);
@@ -187,7 +209,7 @@ public class EndpointBook {
         com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
         model.addAttribute("categories", categoryResponse.getPayload());
 
-        com.soen487.rest.project.repository.core.configuration.ServiceResponse<Book> serviceResponse = this.repositoryProxy.detailBook(bid);
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<Book> serviceResponse = this.gatewayProxy.detailBook(bid);
         if(serviceResponse.getCode()<200 || serviceResponse.getCode()>299){
             String info = serviceResponse.getMessage();
             model.addAttribute("info", info);
@@ -215,7 +237,7 @@ public class EndpointBook {
                           @RequestParam("bid") long bid,
                           @RequestParam("up_img") MultipartFile file) throws IOException {
         com.soen487.rest.project.repository.core.configuration.ServiceResponse<Book> persistedBookResponse =
-                this.repositoryProxy.detailBook(bid);
+                this.gatewayProxy.detailBook(bid);
         if(persistedBookResponse.getCode()<200 || persistedBookResponse.getCode()>299){
             String info = persistedBookResponse.getMessage();
             ModelAndView model = new ModelAndView("error");
@@ -248,7 +270,7 @@ public class EndpointBook {
             String base64String = encoder.encode(bytes).trim();
             String originalFilename = file.getOriginalFilename();
             Gson gsonMapper = new Gson();
-            com.soen487.rest.project.repository.core.configuration.ServiceResponse<String> imgUpResponse = this.repositoryProxy.uploadImg(gsonMapper.toJson(new com.soen487.rest.project.repository.core.DTO.EncodedImg(base64String, originalFilename)));
+            com.soen487.rest.project.repository.core.configuration.ServiceResponse<String> imgUpResponse = this.gatewayProxy.uploadImg(gsonMapper.toJson(new com.soen487.rest.project.repository.core.DTO.EncodedImg(base64String, originalFilename)));
 
             if(imgUpResponse.getCode()<200 || imgUpResponse.getCode()>299){
                 String info = persistedBookResponse.getMessage();
@@ -263,7 +285,7 @@ public class EndpointBook {
         Gson gsonMaper = new Gson();
         String persistedBookStr = gsonMaper.toJson(persistedBook);
         com.soen487.rest.project.repository.core.configuration.ServiceResponse<Long> response =
-                this.repositoryProxy.updateBook(persistedBookStr, bid);
+                this.gatewayProxy.updateBook(persistedBookStr, bid);
 
         if(response.getCode()<200 || response.getCode()>299){
             String info = response.getMessage();
@@ -274,21 +296,21 @@ public class EndpointBook {
             return  model;
         }
 
-        BookChangeLogResponse soapResponse = this.bookChangLogClient.bookChangeLog(LogType.MODIFY, bid);
-        if(soapResponse.getLid()==-1){
-            String info = "error occured during book log update!";
-            ModelAndView model = new ModelAndView("error");
-            ModelMap modelMap = new ModelMap();
-            modelMap.addAttribute("info", info);
-            model.addAllObjects(modelMap);
-            return  model;
-        }
-        return new ModelAndView("redirect:" + "/bookdetail/" + String.valueOf(bid));
+//        BookChangeLogResponse soapResponse = this.bookChangLogClient.bookChangeLog(LogType.MODIFY, bid);
+//        if(soapResponse.getLid()==-1){
+//            String info = "error occured during book log update!";
+//            ModelAndView model = new ModelAndView("error");
+//            ModelMap modelMap = new ModelMap();
+//            modelMap.addAttribute("info", info);
+//            model.addAllObjects(modelMap);
+//            return  model;
+//        }
+        return new ModelAndView("redirect:" + "/bookdetail/" + bid);
     }
 
     @RequestMapping(value="deletebook", method=RequestMethod.DELETE)
     public ModelAndView deleteBook(@RequestParam("bid") long bid){
-        com.soen487.rest.project.repository.core.configuration.ServiceResponse<Long> response = this.repositoryProxy.deleteBook(bid);
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<Long> response = this.gatewayProxy.deleteBook(bid);
         if(response.getCode()<200 || response.getCode()>299){
             String info = response.getMessage();
             ModelAndView model = new ModelAndView("error");
@@ -297,15 +319,15 @@ public class EndpointBook {
             model.addAllObjects(modelMap);
             return  model;
         }
-        BookChangeLogResponse soapResponse = this.bookChangLogClient.bookChangeLog(LogType.DELETE, bid);
-        if(soapResponse.getLid()==-1){
-            String info = "error occured during book log deletion!";
-            ModelAndView model = new ModelAndView("error");
-            ModelMap modelMap = new ModelMap();
-            modelMap.addAttribute("info", info);
-            model.addAllObjects(modelMap);
-            return  model;
-        }
+//        BookChangeLogResponse soapResponse = this.bookChangLogClient.bookChangeLog(LogType.DELETE, bid);
+//        if(soapResponse.getLid()==-1){
+//            String info = "error occured during book log deletion!";
+//            ModelAndView model = new ModelAndView("error");
+//            ModelMap modelMap = new ModelMap();
+//            modelMap.addAttribute("info", info);
+//            model.addAllObjects(modelMap);
+//            return  model;
+//        }
         return new ModelAndView("redirect:/listbook");
     }
 
@@ -314,7 +336,7 @@ public class EndpointBook {
         com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
         model.addAttribute("categories", categoryResponse.getPayload());
 
-        com.soen487.rest.project.repository.core.configuration.ServiceResponse<com.soen487.rest.project.repository.core.entity.Author> response = this.repositoryProxy.authorDetail(aid);
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse<com.soen487.rest.project.repository.core.entity.Author> response = this.gatewayProxy.authorDetail(aid);
         if(response.getCode()<200 || response.getCode()>299) {
             String info = response.getMessage();
             model.addAttribute("info", info);
@@ -327,25 +349,7 @@ public class EndpointBook {
         return "booklistbyauthor";
     }
 
-    @RequestMapping(value="signup", method=RequestMethod.GET)
-    public String userSignup(Model model){
-        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
-        model.addAttribute("categories", categoryResponse.getPayload());
 
-        String info = "We are working hard on this functionality, be patient!";
-        model.addAttribute("info", info);
-        return "error";
-    }
-
-    @RequestMapping(value="login", method=RequestMethod.GET)
-    public String userLogin(Model model){
-        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
-        model.addAttribute("categories", categoryResponse.getPayload());
-
-        String info = "We are working hard on this functionality, be patient!";
-        model.addAttribute("info", info);
-        return "error";
-    }
 
     @RequestMapping(value="/list/category/{categoryid}", method=RequestMethod.GET)
     public String listCategory(@PathVariable("categoryid") long categoryId, Model model){
@@ -357,41 +361,41 @@ public class EndpointBook {
         return "error";
     }
 
-    @RequestMapping(value="/listlog", method=RequestMethod.GET)
-    public String viewLogs(Model model){
-        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
-        model.addAttribute("categories", categoryResponse.getPayload());
+//    @RequestMapping(value="/listlog", method=RequestMethod.GET)
+//    public String viewLogs(Model model){
+//        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+//        model.addAttribute("categories", categoryResponse.getPayload());
+//
+//        GetLogResponse response = this.bookChangLogClient.getLog(null,null,null);
+//
+//        if(response.getLogDtos()==null || response.getLogDtos().size()==0){
+//            throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
+//        }
+//        List<BookChangeLogDto> logDtos = response.getLogDtos();
+//        model.addAttribute("logs", logDtos);
+//        return "loglist";
+//    }
 
-        GetLogResponse response = this.bookChangLogClient.getLog(null,null,null);
-
-        if(response.getLogDtos()==null || response.getLogDtos().size()==0){
-            throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
-        }
-        List<BookChangeLogDto> logDtos = response.getLogDtos();
-        model.addAttribute("logs", logDtos);
-        return "loglist";
-    }
-
-    @RequestMapping(value="/queryloglist", method=RequestMethod.POST)
-    public String queryLogs(Model model,
-                          @RequestParam(name="stime", required=false) String stimeStr,
-                          @RequestParam(name="etime", required=false) String etimeStr,
-                          @RequestParam(name="logType", required=false) String logTypeStr) throws DatatypeConfigurationException {
-        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
-        model.addAttribute("categories", categoryResponse.getPayload());
-
-        XMLGregorianCalendar stimeVar = stimeStr.equals("") ? null : com.soen487.rest.project.repository.core.util.CommonUtils.formatXMLGregorianCalendar(stimeStr);
-        XMLGregorianCalendar etimeVar = etimeStr.equals("") ? null : com.soen487.rest.project.repository.core.util.CommonUtils.formatXMLGregorianCalendar(etimeStr);
-        LogType logType = logTypeStr.equals("") ? LogType.valueOf("ALL") : LogType.valueOf(logTypeStr);
-        GetLogResponse response = this.bookChangLogClient.getLog(stimeVar, etimeVar, logType);
-
-        if(response.getLogDtos()==null || response.getLogDtos().size()==0){
-            throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
-        }
-        List<BookChangeLogDto> logDtos = response.getLogDtos();
-        model.addAttribute("logs", logDtos);
-        return "loglist";
-    }
+//    @RequestMapping(value="/queryloglist", method=RequestMethod.POST)
+//    public String queryLogs(Model model,
+//                          @RequestParam(name="stime", required=false) String stimeStr,
+//                          @RequestParam(name="etime", required=false) String etimeStr,
+//                          @RequestParam(name="logType", required=false) String logTypeStr) throws DatatypeConfigurationException {
+//        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+//        model.addAttribute("categories", categoryResponse.getPayload());
+//
+//        XMLGregorianCalendar stimeVar = stimeStr.equals("") ? null : com.soen487.rest.project.repository.core.util.CommonUtils.formatXMLGregorianCalendar(stimeStr);
+//        XMLGregorianCalendar etimeVar = etimeStr.equals("") ? null : com.soen487.rest.project.repository.core.util.CommonUtils.formatXMLGregorianCalendar(etimeStr);
+//        LogType logType = logTypeStr.equals("") ? LogType.valueOf("ALL") : LogType.valueOf(logTypeStr);
+//        GetLogResponse response = this.bookChangLogClient.getLog(stimeVar, etimeVar, logType);
+//
+//        if(response.getLogDtos()==null || response.getLogDtos().size()==0){
+//            throw new com.soen487.rest.project.repository.core.exception.ServiceException(ReturnCode.NOT_FOUND);
+//        }
+//        List<BookChangeLogDto> logDtos = response.getLogDtos();
+//        model.addAttribute("logs", logDtos);
+//        return "loglist";
+//    }
 
     @RequestMapping(value="/book/search", method=RequestMethod.POST)
     public String queryLogs(Model model,
@@ -400,7 +404,7 @@ public class EndpointBook {
         model.addAttribute("categories", categoryResponse.getPayload());
 
         com.soen487.rest.project.repository.core.configuration.ServiceResponse<List<Book>> response =
-                this.repositoryProxy.searchByTitleOrAuthorName(keyword);
+                this.gatewayProxy.searchByTitleOrAuthorName(keyword);
         if(response.getCode()<200 || response.getCode()>299) {
             String info = response.getMessage();
             model.addAttribute("info", info);
@@ -415,8 +419,72 @@ public class EndpointBook {
         return "booklist";
     }
 
-    @RequestMapping("/login")
-    public String userLogin(){
-        return "hello user";
+    @RequestMapping(value="/signup", method=RequestMethod.GET)
+    public String userSignup(Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+        return "signup";
+    }
+
+    @RequestMapping(value="/signup", method=RequestMethod.POST)
+    public String processUserSignup(  HttpServletResponse response,
+                                      @RequestParam(name="username") String username,
+                                      @RequestParam(name="email") String email,
+                                      @RequestParam(name="password") String password) throws Exception {
+        com.soen487.rest.project.repository.core.entity.User user = new User();
+        user.setUsername(username);
+        user.setPassword(password);
+        user.setEmail(email);
+        user.setGroup(UserGroup.USER);
+        com.soen487.rest.project.repository.core.model.JwtResponse jwtResponse = this.userService.userRegister(user);
+        String jwtToken = jwtResponse.getJwttoken();
+        response.addHeader(JwtTokenUtil.JWT_HEADER_KEY, JwtTokenUtil.JWT_HEADER_VALUE_PREFIX + jwtToken);
+
+        return "index";
+    }
+
+    @RequestMapping(value="/login", method=RequestMethod.GET)
+    public String userLogin(Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+        return "login";
+    }
+
+    @RequestMapping(value="/login", method=RequestMethod.POST)
+    public String processUserLogin(  HttpServletResponse response,
+                                      @RequestParam(name="username") String username,
+                                      @RequestParam(name="password") String password) throws Exception {
+        com.soen487.rest.project.repository.core.model.JwtResponse jwtResponse = this.userService.userLogin(username, password);
+        String jwtToken = jwtResponse.getJwttoken();
+
+        response.addHeader(JwtTokenUtil.JWT_HEADER_KEY, JwtTokenUtil.JWT_HEADER_VALUE_PREFIX + jwtToken);
+        return "index";
+    }
+
+    @RequestMapping(value="/login/failure", method=RequestMethod.GET)
+    public String loginError(Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+
+        String info = "Login failure, check your username or password.";
+        model.addAttribute("info", info);
+        return "error";
+    }
+
+    @RequestMapping(value="/access_denied", method=RequestMethod.GET)
+    public String accessDeniedPage(Model model){
+        com.soen487.rest.project.repository.core.configuration.ServiceResponse categoryResponse = this.categoryService.retriveCategories();
+        model.addAttribute("categories", categoryResponse.getPayload());
+
+        String info = "Please login first.";
+        model.addAttribute("info", info);
+        return "access_denied";
+    }
+
+    @GetMapping("hello/{name}")
+    public String hello(@PathVariable("name") String name, Model model){
+        String info = "hello " + name + " your role is " + role;
+        model.addAttribute("info", info);
+        return "error";
     }
 }

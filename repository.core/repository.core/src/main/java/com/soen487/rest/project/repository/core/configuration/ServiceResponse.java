@@ -3,7 +3,6 @@ package com.soen487.rest.project.repository.core.configuration;
 
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;

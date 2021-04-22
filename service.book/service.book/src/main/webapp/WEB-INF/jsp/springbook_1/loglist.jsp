@@ -11,7 +11,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>散文列表页</title>
+    <title>log list</title>
     <link href="/resources/static/springbook_1/css/css.css" rel="stylesheet" type="text/css">
     <link href="/resources/static/springbook_1/css/list.css" rel="stylesheet" type="text/css">
     <!--<link  href="css/list.css" rel="stylesheet" type="text/css">-->

@@ -11,6 +11,7 @@ import com.soen487.rest.project.repository.implementation.repository.*;
 import com.soen487.rest.project.repository.implementation.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.util.ClassUtils;
@@ -30,6 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
+@RefreshScope
 public class RepositoryImplementataionController {
     @Autowired
     BookRepository bookRepository;
